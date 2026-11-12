@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio de prospectiva · MICMAC y escenarios de Schwartz</title>
+<meta name="description" content="Aplicación para realizar un ejercicio completo de prospectiva estratégica: variables, matriz MICMAC, plano de motricidad y dependencia, incertidumbres críticas y matriz de escenarios de Peter Schwartz.">
+<style>
+:root{
+  --ink:#1F2F3A; --ink-2:#4A5B66; --ink-3:#7A8A93; --line:#DCE3E6; --wash:#F3F6F7; --paper:#FFFFFF;
+  --poder:#B23A48; --enlace:#C98A12; --resultado:#2F7F78; --autonoma:#8C979C; --horizon:#2D4E8A;
+  --poder-t:#F5DDE0; --enlace-t:#F8EBCF; --resultado-t:#D8ECEA; --autonoma-t:#E9EDEE;
+  --serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--horizon);outline-offset:2px}
+.app{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
+aside{background:var(--ink);color:#E8EEF0;padding:28px 22px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font-family:var(--serif);font-weight:600;font-size:1.45rem;line-height:1.2;margin:0 0 6px}
+aside .sub{color:#A9B8BE;font-size:.88rem;margin:0 0 22px}
+.dots{display:flex;gap:7px;margin-bottom:18px}.dots i{width:13px;height:13px;border-radius:50%;display:block}
+nav ol{list-style:none;margin:0;padding:0;counter-reset:s}
+nav li{counter-increment:s}
+nav button{all:unset;cursor:pointer;display:grid;grid-template-columns:30px 1fr 16px;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:8px;color:#C9D5D9;font-size:.95rem;box-sizing:border-box}
+nav button::before{content:counter(s);width:28px;height:28px;border-radius:50%;border:1.5px solid #5E7480;display:grid;place-items:center;font-size:.82rem;font-variant-numeric:tabular-nums}
+nav button[aria-current="step"]{background:#2C4250;color:#fff}
+nav button[aria-current="step"]::before{background:#fff;color:var(--ink);border-color:#fff}
+nav button .ok{width:16px;height:16px;border-radius:50%}
+nav button .ok.done{background:var(--resultado)}
+nav button:focus-visible{outline:3px solid #9DB8FF}
+.side-actions{margin-top:24px;display:grid;gap:8px}
+.side-actions button{background:transparent;border:1px solid #4E6572;color:#DDE6E9;border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;font-size:.9rem}
+.side-actions button:hover{background:#2C4250}
+.save{font-size:.8rem;color:#93A6AE;margin-top:14px}
+main{padding:34px 44px 80px;max-width:1180px;width:100%}
+header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:26px;flex-wrap:wrap}
+header.top .proj{font-family:var(--serif);font-size:1.05rem;color:var(--ink-2)}
+h2{font-family:var(--serif);font-weight:600;font-size:2.1rem;line-height:1.15;margin:0 0 8px}
+h3{font-family:var(--serif);font-weight:600;font-size:1.3rem;margin:28px 0 10px}
+p.lead{color:var(--ink-2);max-width:72ch;margin:0 0 22px;font-size:1.04rem}
+.hint{background:var(--wash);border-radius:var(--r);padding:14px 18px;color:var(--ink-2);max-width:80ch;font-size:.95rem;margin:0 0 20px}
+.hint b{color:var(--ink)}
+label.f{display:block;font-weight:600;font-size:.92rem;margin:0 0 6px}
+.field{margin-bottom:18px;max-width:720px}
+input[type=text],input[type=number],select,textarea{width:100%;border:1px solid #C7D2D6;border-radius:8px;padding:9px 11px;background:#fff}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--horizon)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:900px}
+.btn{border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600;background:var(--ink);color:#fff}
+.btn.sec{background:var(--wash);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:#fff;color:var(--poder);border:1px solid #E6C4C9}
+.btn:hover{filter:brightness(1.08)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+th{font-size:.85rem;color:var(--ink-2);font-weight:600;background:var(--wash)}
+td input,td select,td textarea{padding:6px 8px}
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r)}
+.code{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.mid{border-collapse:separate;border-spacing:0}
+.mid th,.mid td{border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;padding:0;min-width:46px}
+.mid th.rowh{text-align:left;padding:6px 10px;min-width:210px;position:sticky;left:0;background:#fff;z-index:1;font-weight:600;color:var(--ink)}
+.mid thead th{padding:8px 4px;position:sticky;top:0;z-index:2}
+.mid thead th.corner{left:0;z-index:3}
+.mid input{width:46px;height:38px;border:0;border-radius:0;text-align:center;padding:0;font-variant-numeric:tabular-nums;background:transparent}
+.mid input:focus{background:#E8EEFA;outline:2px solid var(--horizon);outline-offset:-2px}
+.mid td.diag{background:#E3E8EA}
+.mid td.v1 input{background:#EEF4F3}.mid td.v2 input{background:var(--enlace-t)}.mid td.v3 input{background:var(--poder-t);font-weight:700}
+.mid .tot{font-weight:700;background:var(--wash);padding:0 8px}
+.mid tr.hl th.rowh,.mid td.hlc{box-shadow:inset 0 0 0 9999px rgba(45,78,138,.07)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.88rem;color:var(--ink-2);margin:10px 0 16px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:50%;display:inline-block}
+.chart{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:8px}
+.chart svg{width:100%;height:auto;display:block}
+.two{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px;align-items:start}
+.zone-card{border-radius:var(--r);padding:14px 16px;margin-bottom:12px}
+.zone-card h4{margin:0 0 4px;font-family:var(--serif);font-size:1.08rem}
+.zone-card p{margin:0;font-size:.92rem;color:var(--ink-2)}
+.zone-card .vs{margin-top:6px;font-weight:600;font-size:.92rem}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.8rem;font-weight:600;color:#fff;white-space:nowrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:8px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.err{color:var(--poder);font-size:.92rem;margin:8px 0}
+.empty{border:2px dashed var(--line);border-radius:var(--r);padding:28px;color:var(--ink-2);text-align:center}
+/* Schwartz */
+.sch{display:grid;grid-template-columns:120px 1fr 1fr 120px;grid-template-rows:auto 1fr 1fr auto;gap:10px;margin-top:10px}
+.sch .ax{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:600;color:var(--ink-2);font-size:.9rem;padding:6px}
+.sch .ax.top,.sch .ax.bot{grid-column:2 / span 2}
+.quad{border-radius:var(--r);padding:14px;border:1px solid var(--line);background:#fff;display:flex;flex-direction:column;gap:8px;min-height:260px}
+.quad .pos{font-size:.8rem;color:var(--ink-3)}
+.quad input.qn{font-family:var(--serif);font-size:1.1rem;font-weight:600}
+.quad textarea{min-height:120px;font-size:.92rem}
+.quad.apuesta{background:#E9F3EF;border-color:#B9D9CF}.quad.adverso{background:#FBECEE;border-color:#EBC7CC}.quad.favorable{background:#F1F4F5}.quad.cubrimiento{background:#FCF4E4;border-color:#EFD9A9}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.methods{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:980px;margin:0 0 26px}
+.mcard{border:2px solid var(--line);border-radius:14px;padding:18px 20px;background:#fff;display:flex;flex-direction:column;gap:10px}
+.mcard[data-sel="true"]{border-color:var(--ink);box-shadow:0 0 0 3px #DDE5F3}
+.mcard h4{margin:0;font-family:var(--serif);font-size:1.25rem}
+.mcard p{margin:0;color:var(--ink-2);font-size:.94rem}
+.mcard ol{margin:0;padding-left:20px;color:var(--ink-2);font-size:.92rem}
+.mcard .row{margin-top:auto}
+@media (max-width:900px){.methods{grid-template-columns:1fr}}
+tr.vrow td{border-bottom:0;padding-bottom:4px}
+.grade{display:flex;gap:28px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin:0 0 22px;max-width:980px}
+.grade .big{font-family:var(--serif);font-size:3.6rem;line-height:1;font-weight:600;font-variant-numeric:tabular-nums}
+.grade .big small{font-size:1.3rem;color:var(--ink-3)}
+.grade p{margin:4px 0 0;color:var(--ink-2);max-width:60ch}
+.crit{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 14px;max-width:980px}
+.crit header{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.crit h4{margin:0;font-family:var(--serif);font-size:1.12rem}
+.bar{height:8px;background:var(--wash);border-radius:99px;overflow:hidden;margin:10px 0 12px}
+.bar i{display:block;height:100%;border-radius:99px}
+.fb{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fb h5{margin:0 0 6px;font-size:.88rem;color:var(--ink-2)}
+.fb ul{margin:0;padding-left:18px;font-size:.92rem}
+.fb li{margin-bottom:4px}
+.fb .goodl li::marker{content:"✓  ";color:var(--resultado)}
+.fb .fixl li::marker{content:"→  ";color:var(--poder)}
+.modal-bg{position:fixed;inset:0;background:rgba(20,32,40,.45);display:grid;place-items:center;z-index:50;padding:16px}
+.modal{background:#fff;border-radius:14px;padding:22px 24px;max-width:480px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.modal p{margin:0 0 18px}
+.banner{border-radius:10px;padding:12px 16px;margin:0 0 18px;font-size:.95rem;max-width:980px}
+.banner.warn{background:#FBECEE;color:#7A1F2B;border:1px solid #EBC7CC}
+.banner.info{background:#E9EEF8;color:#1F3A6B;border:1px solid #C9D5EE}
+.banner a{color:inherit;font-weight:700}
+details.rub summary{cursor:pointer;font-weight:600;color:var(--horizon);margin:8px 0}
+@media (max-width:900px){.fb{grid-template-columns:1fr}}
+tr.ficha td{padding-top:0;padding-bottom:14px}
+.ficha-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;background:var(--wash);border-radius:8px;padding:10px}
+.ficha-grid label{display:block;font-size:.8rem;font-weight:600;color:var(--ink-2);margin:0 0 4px}
+.ficha-grid textarea{min-height:72px;font-size:.9rem}
+.ficha-tog{background:none;border:0;color:var(--horizon);cursor:pointer;font-weight:600;padding:4px 0;font-size:.9rem}
+@media (max-width:900px){.ficha-grid{grid-template-columns:1fr 1fr}}
+.chk{display:inline-flex;align-items:center;gap:4px;font-size:.88rem;margin-right:8px}
+/* Report */
+.report h3{border-top:1px solid var(--line);padding-top:18px}
+.report .meta{color:var(--ink-2)}
+.mini{font-size:.85rem}
+.mini th,.mini td{padding:5px 6px}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  aside{position:static;height:auto}
+  nav ol{display:flex;overflow:auto;gap:4px}
+  nav button{grid-template-columns:30px auto;white-space:nowrap}
+  nav button .ok{display:none}
+  main{padding:22px 16px 60px}
+  .two,.grid2{grid-template-columns:1fr}
+  .sch{grid-template-columns:1fr;grid-template-rows:auto}
+  .sch .ax.top,.sch .ax.bot{grid-column:auto}
+  .sch .ax.side{display:none}
+}
+@media print{
+  aside,header.top .row,.noprint{display:none!important}
+  .app{display:block} main{padding:0;max-width:none}
+  section[hidden]{display:none!important}
+  .quad{break-inside:avoid} h3{break-after:avoid}
+}
+@media (prefers-reduced-motion:no-preference){ .fade{animation:f .25s ease-out} @keyframes f{from{opacity:0}to{opacity:1}} }
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="dots" aria-hidden="true"><i style="background:var(--poder)"></i><i style="background:var(--enlace)"></i><i style="background:var(--resultado)"></i><i style="background:var(--autonoma)"></i></div>
+  <h1>Laboratorio de prospectiva</h1>
+  <p class="sub">De las variables a los escenarios: MICMAC y matriz de Peter Schwartz</p>
+  <nav aria-label="Pasos del ejercicio"><ol id="steps"></ol></nav>
+  <div class="side-actions">
+    <button id="bExample">Cargar ejemplo resuelto</button>
+    <button id="bExport">Descargar mi trabajo (.json)</button>
+    <button id="bImport">Abrir un trabajo guardado</button>
+    <button id="bReset">Empezar de cero</button>
+    <button id="bTeacher">Modo docente: revisar trabajos</button>
+    <input type="file" id="fTeacher" accept=".json,application/json" multiple hidden>
+    <input type="file" id="fImport" accept=".json,application/json" hidden>
+  </div>
+  <p class="save" id="saveState" role="status"></p>
+  <p class="save" id="cloudSide"></p>
+</aside>
+<main>
+  <header class="top">
+    <div class="proj" id="projLine"></div>
+    <div class="row"><button class="btn sec" id="bPrev">Paso anterior</button><button class="btn" id="bNext">Siguiente paso</button></div>
+  </header>
+  <div id="view"></div>
+</main>
+</div>
+<script>
+"use strict";
+/* ---------- Estado ---------- */
+const ROUTES={
+ frances:[{id:"proyecto",t:"Proyecto y método"},{id:"variables",t:"Variables"},{id:"matriz",t:"Matriz de influencias"},{id:"plano",t:"Plano MICMAC"},
+  {id:"incert",t:"Incertidumbres críticas"},{id:"schwartz",t:"Matriz de Schwartz"},{id:"estrategias",t:"Estrategias e indicadores"},{id:"rubrica",t:"Rúbrica y retroalimentación"},{id:"informe",t:"Informe final"}],
+ anglo:[{id:"proyecto",t:"Proyecto y método"},{id:"variables",t:"Variables"},{id:"calif",t:"Calificación"},{id:"grafico",t:"Mapa impacto-incertidumbre"},
+  {id:"schwartz",t:"Matriz de Schwartz"},{id:"estrategias",t:"Estrategias e indicadores"},{id:"rubrica",t:"Rúbrica y retroalimentación"},{id:"informe",t:"Informe final"}],
+ none:[{id:"proyecto",t:"Proyecto y método"}]};
+const METHODS={frances:"Escuela francesa (MICMAC)",anglo:"Escuela anglosajona (Peter Schwartz)"};
+let STEPS=ROUTES.none;
+const setRoute=()=>{STEPS=ROUTES[S.method]||ROUTES.none;if(S.step>=STEPS.length)S.step=0;};
+const KEY="labprospectiva_v1";
+const QPOS={q1:"Arriba a la derecha",q2:"Arriba a la izquierda",q3:"Abajo a la izquierda",q4:"Abajo a la derecha"};
+const ROLES=[["","Sin definir"],["apuesta","Escenario apuesta"],["favorable","Favorable"],["adverso","Adverso"],["cubrimiento","De cubrimiento"]];
+const blank=()=>({method:"",fichas:true,meta:{estudiante:"",empresa:"",sector:"",pregunta:"",horizonte:"",descripcion:""},vars:[],M:[],
+  thr:{imp:4,unc:4,med:3},axes:{x:"",y:"",xNeg:"",xPos:"",yNeg:"",yPos:""},
+  esc:{q1:{n:"",rol:"",narr:"",ganar:""},q2:{n:"",rol:"",narr:"",ganar:""},q3:{n:"",rol:"",narr:"",ganar:""},q4:{n:"",rol:"",narr:"",ganar:""}},
+  estr:[],ind:[],step:0});
+let S=blank();
+function norm(d){const b=blank();const o=Object.assign(b,d);if(!o.method&&Array.isArray(d.M)&&d.M.some(r=>Array.isArray(r)&&r.some(x=>+x>0)))o.method="frances";o.thr=Object.assign({imp:4,unc:4,med:3},d.thr||{});o.ind=(o.ind||[]).map(x=>({eje:x.eje||"",t:x.t||"",s:x.s||"",h:x.h!=null?x.h:(x.q?{q1:"Escenario arriba a la derecha",q2:"Escenario arriba a la izquierda",q3:"Escenario abajo a la izquierda",q4:"Escenario abajo a la derecha"}[x.q]:""),u:x.u||""}));o.vars=(o.vars||[]).map(v=>Object.assign({kind:"",ind:"",imp:0,impMan:"",unc:0,desc:"",type:"Externa",def:"",pas:"",pre:"",fut:""},v));o.fichas=d.fichas!==false;return o;}
+function load(){try{const raw=localStorage.getItem(KEY); if(raw){S=norm(JSON.parse(raw));}}catch(e){}}
+let saveTimer=null;
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{queueCloud();try{localStorage.setItem(KEY,JSON.stringify(S));msg("Guardado en este navegador · "+new Date().toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"}));}catch(e){msg("No se pudo guardar en el navegador. Descarga tu trabajo para no perderlo.");}},300);}
+const msg=t=>document.getElementById("saveState").textContent=t;
+function ask(text,ok="Aceptar",cancel="Cancelar"){return new Promise(res=>{const bg=document.createElement("div");bg.className="modal-bg";
+ bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><p>${esc(text)}</p><div class="row" style="justify-content:flex-end">${cancel?`<button class="btn sec" data-r="0">${esc(cancel)}</button>`:""}<button class="btn" data-r="1">${esc(ok)}</button></div></div>`;
+ document.body.appendChild(bg);const close=v=>{bg.remove();res(v);};bg.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>close(b.dataset.r==="1"));
+ bg.addEventListener("keydown",e=>{if(e.key==="Escape")close(false);});bg.querySelector('[data-r="1"]').focus();});}
+const tell=t=>ask(t,"Entendido",null);
+const STORAGE_OK=(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return true;}catch(e){return false;}})();
+const IN_FRAME=(()=>{try{return window.self!==window.top;}catch(e){return true;}})();
+window.addEventListener("pagehide",()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}});
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);
+
+/* ---------- Cálculos ---------- */
+function motDep(M){const n=M.length;const mot=M.map(r=>r.reduce((a,b)=>a+(+b||0),0));const dep=Array.from({length:n},(_,j)=>M.reduce((a,r)=>a+(+r[j]||0),0));return{mot,dep};}
+function square(M){const n=M.length;return M.map((r,i)=>Array.from({length:n},(_,j)=>{let s=0;for(let k=0;k<n;k++)s+=(+M[i][k]||0)*(+M[k][j]||0);return s;}));}
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+function zones(mot,dep){const mm=avg(mot),dm=avg(dep);return{mm,dm,z:mot.map((m,i)=>m>=mm&&dep[i]<dm?"poder":m>=mm?"enlace":dep[i]>=dm?"resultado":"autonoma")};}
+const ZN={poder:"Poder (motriz)",enlace:"Enlace (estratégica)",resultado:"Resultado (dependiente)",autonoma:"Autónoma"};
+const ZACT={poder:"Anticipar",enlace:"Intervenir",resultado:"Medir",autonoma:"Vigilar"};
+function ranks(a){return a.map(v=>1+a.filter(x=>x>v).length);}
+function impacts(){if(S.method==="anglo")return S.vars.map(v=>+v.imp||0);const {mot}=motDep(S.M);const mn=Math.min(...mot),mx=Math.max(...mot);
+  return S.vars.map((v,i)=>v.impMan?+v.impMan:(mx===mn?3:Math.round(1+4*(mot[i]-mn)/(mx-mn))));}
+function classUnc(I,U){return I>=S.thr.imp&&U>=S.thr.unc?"Incertidumbre crítica":I>=S.thr.imp&&U>=S.thr.med?"Candidata (eje alterno)":I>=S.thr.imp?"Elemento predeterminado":U>=S.thr.unc?"Incierta de bajo impacto":"Secundaria";}
+const CCOL={"Incertidumbre crítica":"#C98A12","Candidata (eje alterno)":"#7A5BA8","Elemento predeterminado":"#B23A48","Incierta de bajo impacto":"#2D4E8A","Secundaria":"#8C979C"};
+function suggestAxes(){const I=impacts();const c=S.vars.map((v,i)=>({i,s:I[i]*(+v.unc||0),crit:v.type!=="Interna"&&I[i]>=S.thr.imp&&(+v.unc||0)>=S.thr.unc})).filter(x=>x.crit).sort((a,b)=>b.s-a.s);return c.slice(0,2).map(x=>S.vars[x.i].id);}
+const varById=id=>S.vars.find(v=>v.id===id);
+function nextCode(){let k=1;while(S.vars.some(v=>v.code==="V"+k))k++;return"V"+k;}
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+/* ---------- Gráfico de cuadrantes (SVG) ---------- */
+function quadSVG(o){
+ // o: pts[{label,x,y,color,title}], xmax,ymax,xv,yh,xl,yl,q:{tl,tr,bl,br}, tints
+ const W=720,H=470,L=58,R=18,T=18,B=52,pw=W-L-R,ph=H-T-B;
+ const X=v=>L+v/o.xmax*pw, Y=v=>T+ph-v/o.ymax*ph;
+ const xv=X(o.xv),yh=Y(o.yh);
+ let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria)}">`;
+ const t=o.tints;
+ s+=`<rect x="${L}" y="${T}" width="${xv-L}" height="${yh-T}" fill="${t.tl}"/><rect x="${xv}" y="${T}" width="${L+pw-xv}" height="${yh-T}" fill="${t.tr}"/>`;
+ s+=`<rect x="${L}" y="${yh}" width="${xv-L}" height="${T+ph-yh}" fill="${t.bl}"/><rect x="${xv}" y="${yh}" width="${L+pw-xv}" height="${T+ph-yh}" fill="${t.br}"/>`;
+ const xt=o.xticks,yt=o.yticks;
+ xt.forEach(v=>{s+=`<line x1="${X(v)}" y1="${T}" x2="${X(v)}" y2="${T+ph}" stroke="#fff" stroke-width="1"/><text x="${X(v)}" y="${T+ph+18}" font-size="12" text-anchor="middle" fill="#4A5B66">${v}</text>`;});
+ yt.forEach(v=>{s+=`<line x1="${L}" y1="${Y(v)}" x2="${L+pw}" y2="${Y(v)}" stroke="#fff" stroke-width="1"/><text x="${L-8}" y="${Y(v)+4}" font-size="12" text-anchor="end" fill="#4A5B66">${v}</text>`;});
+ s+=`<line x1="${xv}" y1="${T}" x2="${xv}" y2="${T+ph}" stroke="#B23A48" stroke-width="1.6" stroke-dasharray="6 5"/><line x1="${L}" y1="${yh}" x2="${L+pw}" y2="${yh}" stroke="#B23A48" stroke-width="1.6" stroke-dasharray="6 5"/>`;
+ s+=`<line x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}" stroke="#7A8A93"/><line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="#7A8A93"/>`;
+ const q=o.q, qs=`font-size="13" font-weight="700"`;
+ s+=`<text x="${L+10}" y="${T+20}" ${qs} fill="${q.tl[1]}">${esc(q.tl[0])}</text><text x="${L+pw-10}" y="${T+20}" ${qs} text-anchor="end" fill="${q.tr[1]}">${esc(q.tr[0])}</text>`;
+ s+=`<text x="${L+10}" y="${T+ph-10}" ${qs} fill="${q.bl[1]}">${esc(q.bl[0])}</text><text x="${L+pw-10}" y="${T+ph-10}" ${qs} text-anchor="end" fill="${q.br[1]}">${esc(q.br[0])}</text>`;
+ s+=`<text x="${L+pw/2}" y="${H-10}" font-size="13" text-anchor="middle" fill="#1F2F3A" font-weight="600">${esc(o.xl)} →</text>`;
+ s+=`<text x="16" y="${T+ph/2}" font-size="13" text-anchor="middle" fill="#1F2F3A" font-weight="600" transform="rotate(-90 16 ${T+ph/2})">${esc(o.yl)} →</text>`;
+ const groups={};o.pts.forEach(p=>{const k=p.x+"|"+p.y;(groups[k]=groups[k]||[]).push(p);});
+ Object.values(groups).forEach(g=>{const p=g[0];const cx=X(Math.min(p.x,o.xmax)),cy=Y(Math.min(p.y,o.ymax));
+   s+=`<g><title>${esc(g.map(z=>z.title).join("\n"))}</title><circle cx="${cx}" cy="${cy}" r="8" fill="${p.color}" stroke="#fff" stroke-width="2"/>`;
+   const lab=g.map(z=>z.label).join(", ");const right=cx<L+pw-90;
+   s+=`<text x="${right?cx+12:cx-12}" y="${cy-9}" font-size="13" font-weight="700" fill="#1F2F3A" text-anchor="${right?"start":"end"}" paint-order="stroke" stroke="#fff" stroke-width="3">${esc(lab)}</text></g>`;});
+ return s+"</svg>";
+}
+function niceMax(v){const m=Math.max(4,v);const step=m<=12?2:m<=30?4:m<=80?10:m<=200?25:50;return {max:Math.ceil((m*1.18+1)/step)*step,step};}
+function micmacSVG(indirect){
+ const M=indirect?square(S.M):S.M;const {mot,dep}=motDep(M);const Z=zones(mot,dep);
+ const xm=niceMax(Math.max(...dep,1)),ym=niceMax(Math.max(...mot,1));
+ const ticks=(m)=>{const a=[];for(let v=0;v<=m.max;v+=m.step)a.push(v);return a;};
+ const col={poder:"#B23A48",enlace:"#C98A12",resultado:"#2F7F78",autonoma:"#8C979C"};
+ return quadSVG({aria:"Plano de motricidad y dependencia",pts:S.vars.map((v,i)=>({label:v.code,x:dep[i],y:mot[i],color:col[Z.z[i]],title:`${v.code} ${v.name}: motricidad ${mot[i]}, dependencia ${dep[i]} (${ZN[Z.z[i]]})`})),
+  xmax:xm.max,ymax:ym.max,xv:Z.dm,yh:Z.mm,xticks:ticks(xm),yticks:ticks(ym),xl:"Dependencia",yl:"Motricidad",
+  q:{tl:["Poder",col.poder],tr:["Enlace",col.enlace],bl:["Autónomas","#5E6B70"],br:["Resultado",col.resultado]},
+  tints:{tl:"#F8E6E8",tr:"#FAF0DA",bl:"#EEF1F2",br:"#E1F0EE"}});
+}
+function uncSVG(){
+ const I=impacts();
+ return quadSVG({aria:"Impacto contra incertidumbre",pts:S.vars.map((v,i)=>{const U=+v.unc||0;const c=classUnc(I[i],U);
+   return{label:v.code,x:U,y:I[i],color:CCOL[c],title:`${v.code} ${v.name}: impacto ${I[i]}, incertidumbre ${U} (${c})`};}),
+  xmax:5.5,ymax:6,xv:S.thr.unc-0.5,yh:S.thr.imp-0.5,xticks:[0,1,2,3,4,5],yticks:[0,1,2,3,4,5],xl:"Incertidumbre",yl:"Impacto",
+  q:{tl:["Elementos predeterminados","#B23A48"],tr:["Incertidumbres críticas","#9A6A0E"],bl:["Secundarias","#5E6B70"],br:["Inciertas, bajo impacto","#2D4E8A"]},
+  tints:{tl:"#F8E6E8",tr:"#FAF0DA",bl:"#EEF1F2",br:"#E5EBF5"}});
+}
+
+/* ---------- Validaciones por paso ---------- */
+function stepDone(i){
+ switch(STEPS[i].id){
+  case"proyecto":return !!(S.method&&S.meta.empresa&&S.meta.pregunta);
+  case"variables":return S.vars.length>=(S.method==="anglo"?4:6)&&S.vars.every(v=>v.name);
+  case"matriz":return S.vars.length>=6&&S.M.some(r=>r.some(x=>+x>0));
+  case"plano":return S.vars.length>=6&&S.M.some(r=>r.some(x=>+x>0));
+  case"incert":return S.vars.length>0&&S.vars.every(v=>+v.unc>0);
+  case"schwartz":return !!(S.axes.x&&S.axes.y&&S.axes.x!==S.axes.y&&["q1","q2","q3","q4"].every(k=>S.esc[k].n));
+  case"estrategias":return S.estr.length>0&&S.ind.length>0;
+  case"calif":return S.vars.length>0&&S.vars.every(v=>+v.unc>0&&+v.imp>0);
+  case"grafico":return S.vars.length>0&&S.vars.every(v=>+v.unc>0&&+v.imp>0)&&suggestAxes().length===2;
+  case"informe":case"rubrica":return false;}
+}
+
+/* ---------- Navegación ---------- */
+function renderNav(){
+ setRoute();
+ $("#steps").innerHTML=STEPS.map((s,i)=>`<li><button data-i="${i}" ${i===S.step&&!teacher?'aria-current="step"':""}><span>${s.t}</span><span class="ok ${stepDone(i)?"done":""}" title="${stepDone(i)?"Paso completo":""}"></span></button></li>`).join("");
+ $("#steps").querySelectorAll("button").forEach(b=>b.onclick=()=>go(+b.dataset.i));
+ $("#projLine").textContent=(S.meta.empresa?S.meta.empresa:"Ejercicio sin nombre")+(S.method?" · "+METHODS[S.method]:"")+(S.meta.estudiante?" · "+S.meta.estudiante:"");
+ $("#bNext").disabled=!S.method;
+ $("#bPrev").disabled=S.step===0;$("#bNext").textContent=S.step===STEPS.length-1?"Imprimir o guardar PDF":"Siguiente paso";
+}
+function go(i){teacher=false;setRoute();S.step=Math.max(0,Math.min(STEPS.length-1,i));save();render();window.scrollTo({top:0});}
+$("#bPrev").onclick=()=>go(S.step-1);
+$("#bNext").onclick=()=>{if(S.step===STEPS.length-1)window.print();else go(S.step+1);};
+
+/* ---------- Vistas ---------- */
+const V={};
+V.proyecto=()=>`
+<h2>Proyecto y método</h2>
+<p class="lead">Elige el método con el que vas a trabajar y define la organización y la pregunta que el ejercicio debe responder.</p>
+${cloudBox()}
+<h3 style="margin-top:6px">Método</h3>
+<div class="methods" role="radiogroup" aria-label="Método de prospectiva">
+ <div class="mcard" data-sel="${S.method==="frances"}">
+  <h4>Escuela francesa</h4>
+  <p>Godet, con la adaptación colombiana de Mojica. Las variables clave salen del análisis estructural MICMAC; luego se construyen los escenarios con los ejes de Schwartz.</p>
+  <ol><li>Variables internas y externas</li><li>Matriz de influencias directas (0 a 3)</li><li>Plano de motricidad y dependencia</li><li>Incertidumbres críticas</li><li>Matriz de Schwartz, estrategias e indicadores</li></ol>
+  <div class="row"><button class="btn ${S.method==="frances"?"":"sec"}" role="radio" aria-checked="${S.method==="frances"}" data-method="frances">${S.method==="frances"?"Método elegido":"Usar este método"}</button><button class="btn sec" data-exm="frances">Ver ejemplo: cooperativa cafetera</button></div>
+ </div>
+ <div class="mcard" data-sel="${S.method==="anglo"}">
+  <h4>Escuela anglosajona</h4>
+  <p>Peter Schwartz. Cada variable del entorno se califica directamente por impacto e incertidumbre; las dos incertidumbres críticas forman la matriz 2 × 2.</p>
+  <ol><li>Variables: tendencias, factores de cambio y hechos portadores</li><li>Calificación de impacto e incertidumbre (1 a 5)</li><li>Mapa de impacto e incertidumbre</li><li>Matriz de Schwartz y escenarios</li><li>Estrategias e indicadores</li></ol>
+  <div class="row"><button class="btn ${S.method==="anglo"?"":"sec"}" role="radio" aria-checked="${S.method==="anglo"}" data-method="anglo">${S.method==="anglo"?"Método elegido":"Usar este método"}</button><button class="btn sec" data-exm="anglo">Ver ejemplo: restaurante</button></div>
+ </div>
+</div>
+${S.method?"":`<p class="err">Elige un método para habilitar los demás pasos.</p>`}
+<h3>Proyecto</h3>
+<div class="hint"><b>Una buena pregunta focal</b> nombra la organización, la decisión y el horizonte. Ejemplo: «¿Cómo debe la cooperativa asegurar la permanencia de sus asociados y su sostenibilidad financiera de aquí a 2032?»</div>
+<div class="grid2">
+ <div class="field"><label class="f" for="m_est">Nombre del estudiante o del equipo</label><input type="text" id="m_est" data-m="estudiante" value="${esc(S.meta.estudiante)}"></div>
+ <div class="field"><label class="f" for="m_emp">Organización estudiada</label><input type="text" id="m_emp" data-m="empresa" value="${esc(S.meta.empresa)}"></div>
+ <div class="field"><label class="f" for="m_sec">Sector</label><input type="text" id="m_sec" data-m="sector" value="${esc(S.meta.sector)}"></div>
+ <div class="field"><label class="f" for="m_hor">Horizonte (por ejemplo, 2026 – 2031)</label><input type="text" id="m_hor" data-m="horizonte" value="${esc(S.meta.horizonte)}"></div>
+</div>
+<div class="field"><label class="f" for="m_pre">Pregunta focal</label><textarea id="m_pre" data-m="pregunta">${esc(S.meta.pregunta)}</textarea></div>
+<div class="field"><label class="f" for="m_des">Descripción breve de la organización</label><textarea id="m_des" data-m="descripcion">${esc(S.meta.descripcion)}</textarea></div>`;
+function bindProyecto(){
+ document.querySelectorAll("[data-method]").forEach(b=>b.onclick=()=>{const m=b.dataset.method;if(S.method===m)return;
+  const go2=()=>{S.method=m;S.step=0;save();render();};
+  if(S.method&&S.vars.length)ask("Cambiar de método conserva tus variables y escenarios, pero los pasos cambian. ¿Cambiar de método?","Cambiar de método").then(v=>{if(v)go2();});else go2();});
+ document.querySelectorAll("[data-exm]").forEach(b=>b.onclick=()=>loadExample(b.dataset.exm));
+ bindCloud();
+ document.querySelectorAll("[data-m]").forEach(el=>el.oninput=()=>{S.meta[el.dataset.m]=el.value;save();renderNav();});}
+
+V.variables=()=>`
+<h2>Variables</h2>
+<p class="lead">Convierte los factores de cambio, tendencias y hechos portadores de futuro en variables. Incluye variables externas (del entorno) e internas (que la organización controla).</p>
+<div class="hint">${S.method==="anglo"?`<b>Método anglosajón:</b> los ejes de la matriz deben ser variables del entorno. Clasifica cada variable como tendencia (dirección sostenida), factor de cambio (fenómeno amplio) o hecho portador de futuro (señal puntual), y anota cómo la medirías.`:`<b>Método francés:</b> incluye variables externas e internas; el MICMAC estudia el sistema completo.`} Entre 8 y 20 variables; cada una con un nombre corto y una descripción. En la ficha de cada variable describe su definición y su evolución: pasado, presente y posible futuro, idealmente con datos y fuente. Necesitas al menos ${S.method==="anglo"?4:6} para continuar.</div>
+${S.vars.length?`<div class="tbl-wrap"><table><thead><tr><th style="width:62px">Código</th><th>Nombre</th><th style="width:170px">Clase</th><th style="width:118px">Ámbito</th><th>Origen o descripción</th><th>Indicador para medirla</th><th style="width:60px"></th></tr></thead><tbody>
+${S.vars.map((v,i)=>`<tr class="${S.fichas?"vrow":""}"><td class="code">${esc(v.code)}</td>
+<td><input type="text" aria-label="Nombre de ${esc(v.code)}" data-v="${i}" data-k="name" value="${esc(v.name)}"></td>
+<td><select aria-label="Clase de ${esc(v.code)}" data-v="${i}" data-k="kind"><option value="">—</option>${["Tendencia","Factor de cambio","Hecho portador de futuro"].map(t=>`<option ${v.kind===t?"selected":""}>${t}</option>`).join("")}</select></td>
+<td><select aria-label="Ámbito de ${esc(v.code)}" data-v="${i}" data-k="type">${["Externa","Interna","Mixta"].map(t=>`<option ${v.type===t?"selected":""}>${t}</option>`).join("")}</select></td>
+<td><input type="text" aria-label="Origen de ${esc(v.code)}" data-v="${i}" data-k="desc" value="${esc(v.desc)}"></td>
+<td><input type="text" aria-label="Indicador de ${esc(v.code)}" data-v="${i}" data-k="ind" value="${esc(v.ind)}"></td>
+<td><button class="btn danger" data-del="${i}" aria-label="Eliminar ${esc(v.code)}">Quitar</button></td></tr>
+${S.fichas?`<tr class="ficha"><td></td><td colspan="6"><div class="ficha-grid">${FICHA.map(([k,t,ph])=>`<div><label for="f_${k}_${i}">${t}</label><textarea id="f_${k}_${i}" placeholder="${ph}" data-v="${i}" data-k="${k}">${esc(v[k])}</textarea></div>`).join("")}</div></td></tr>`:""}`).join("")}
+</tbody></table></div>`:`<div class="empty">Aún no hay variables. Agrega la primera o carga el ejemplo resuelto desde el menú.</div>`}
+<div class="row" style="margin-top:14px"><button class="btn" id="addVar">Agregar variable</button><span class="mini" style="color:var(--ink-2)">${S.vars.length} variables</span>${S.vars.length?`<button class="ficha-tog" id="togF" aria-pressed="${S.fichas}">${S.fichas?"Ocultar fichas (definición, pasado, presente, futuro)":"Mostrar fichas (definición, pasado, presente, futuro)"}</button>`:""}</div>`;
+const FICHA=[["def","Definición","Qué es la variable"],["pas","Pasado","Cómo era antes (dato y año)"],["pre","Presente","Cómo está hoy (dato y año)"],["fut","Posible futuro","Hacia dónde podría ir (dato y año)"]];
+function bindVariables(){
+ document.querySelectorAll("[data-v]").forEach(el=>el[el.tagName==="SELECT"?"onchange":"oninput"]=()=>{S.vars[+el.dataset.v][el.dataset.k]=el.value;save();renderNav();});
+ document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const i=+b.dataset.del;const v=S.vars[i];
+   const del=()=>{S.vars.splice(i,1);S.M.splice(i,1);S.M.forEach(r=>r.splice(i,1));["x","y"].forEach(a=>{if(S.axes[a]===v.id)S.axes[a]="";});save();render();};
+   const filled=S.M.length&&S.M.flat().some(x=>+x>0);if(!filled)del();else ask(`Quitar ${v.code} también borra sus calificaciones en la matriz. ¿Quitar la variable?`,"Quitar variable").then(ok=>{if(ok)del();});});
+ const tg=$("#togF");if(tg)tg.onclick=()=>{S.fichas=!S.fichas;save();render();};
+ $("#addVar").onclick=()=>{S.vars.push({id:uid(),code:nextCode(),name:"",desc:"",type:"Externa",kind:"",ind:"",imp:0,unc:0,impMan:"",def:"",pas:"",pre:"",fut:""});S.M.forEach(r=>r.push(0));S.M.push(Array(S.vars.length).fill(0));save();render();
+   const ins=document.querySelectorAll('[data-k="name"]');ins[ins.length-1]?.focus();};
+}
+
+V.matriz=()=>{
+ if(S.vars.length<2)return `<h2>Matriz de influencias directas</h2><div class="empty">Primero agrega variables en el paso 2.</div>`;
+ const {mot,dep}=motDep(S.M);
+ return `<h2>Matriz de influencias directas</h2>
+<p class="lead">Para cada par pregúntate: <b>si cambia la variable de la fila, ¿cambia directamente la de la columna?</b> Califica solo la influencia directa, no la que pasa por otra variable.</p>
+<div class="legend"><span><b>0</b> sin influencia</span><span><b>1</b> débil</span><span><b>2</b> moderada</span><span><b>3</b> fuerte</span><span>La diagonal no se califica. Usa las flechas o Tab para moverte.</span></div>
+<div class="tbl-wrap" style="max-height:70vh"><table class="mid" id="midT"><thead><tr><th class="rowh corner">Influye ↓ / sobre →</th>${S.vars.map(v=>`<th title="${esc(v.name)}">${esc(v.code)}</th>`).join("")}<th class="tot">Motricidad</th></tr></thead><tbody>
+${S.vars.map((v,i)=>`<tr data-r="${i}"><th class="rowh" title="${esc(v.desc)}">${esc(v.code)} ${esc(v.name)}</th>${S.vars.map((w,j)=>i===j?`<td class="diag" data-c="${j}" aria-hidden="true"></td>`:`<td class="v${+S.M[i][j]||0}" data-c="${j}"><input inputmode="numeric" maxlength="1" aria-label="Influencia de ${esc(v.code)} sobre ${esc(w.code)}" data-i="${i}" data-j="${j}" value="${+S.M[i][j]||0}"></td>`).join("")}<td class="tot" id="mot${i}">${mot[i]}</td></tr>`).join("")}
+<tr><th class="rowh">Dependencia</th>${dep.map((d,j)=>`<td class="tot" id="dep${j}">${d}</td>`).join("")}<td class="tot"></td></tr>
+</tbody></table></div><p class="err" id="midErr" role="alert"></p>`;};
+function bindMatriz(){
+ const t=$("#midT");if(!t)return;const n=S.vars.length;
+ t.querySelectorAll("input").forEach(inp=>{
+  inp.onfocus=()=>{inp.select();hl(+inp.dataset.i,+inp.dataset.j);};
+  inp.oninput=()=>{const v=inp.value.trim();const i=+inp.dataset.i,j=+inp.dataset.j;
+   if(!/^[0-3]$/.test(v)){$("#midErr").textContent="Usa solo 0, 1, 2 o 3.";inp.value=+S.M[i][j]||0;return;}
+   $("#midErr").textContent="";S.M[i][j]=+v;inp.parentElement.className="v"+v;
+   const {mot,dep}=motDep(S.M);$("#mot"+i).textContent=mot[i];$("#dep"+j).textContent=dep[j];save();renderNav();
+   const nx=t.querySelector(`input[data-i="${i}"][data-j="${j+1===i?j+2:j+1}"]`);if(nx)nx.focus();};
+  inp.onkeydown=e=>{const i=+inp.dataset.i,j=+inp.dataset.j;const mv={ArrowRight:[0,1],ArrowLeft:[0,-1],ArrowDown:[1,0],ArrowUp:[-1,0]}[e.key];if(!mv)return;e.preventDefault();
+   let a=i+mv[0],b=j+mv[1];if(a===b){a+=mv[0];b+=mv[1];}const nx=t.querySelector(`input[data-i="${a}"][data-j="${b}"]`);if(nx)nx.focus();};
+ });
+ t.onfocusout=()=>hl(-1,-1);
+ function hl(i,j){t.querySelectorAll("tr.hl").forEach(r=>r.classList.remove("hl"));t.querySelectorAll("td.hlc").forEach(c=>c.classList.remove("hlc"));
+  if(i<0)return;t.querySelector(`tr[data-r="${i}"]`)?.classList.add("hl");t.querySelectorAll(`td[data-c="${j}"]`).forEach(c=>c.classList.add("hlc"));}
+}
+
+let indirect=false;
+V.plano=()=>{
+ if(S.vars.length<2||!S.M.some(r=>r.some(x=>+x>0)))return `<h2>Plano MICMAC</h2><div class="empty">Califica la matriz de influencias del paso 3 para ver el plano.</div>`;
+ const M=indirect?square(S.M):S.M;const {mot,dep}=motDep(M);const Z=zones(mot,dep);
+ const d0=motDep(S.M),r0=ranks(d0.mot),r1=ranks(motDep(square(S.M)).mot);
+ const by=k=>S.vars.filter((v,i)=>Z.z[i]===k).map(v=>v.code).join(", ")||"Ninguna";
+ const card=(k,txt)=>`<div class="zone-card" style="background:var(--${k}-t)"><h4><span class="sw" style="background:var(--${k})"></span> ${ZN[k]} · ${ZACT[k]}</h4><p>${txt}</p><div class="vs">${by(k)}</div></div>`;
+ return `<h2>Plano MICMAC</h2>
+<p class="lead">Cada variable se ubica según su <b>motricidad</b> (suma de su fila: cuánto influye) y su <b>dependencia</b> (suma de su columna: cuánto la influyen). Las líneas rojas son los promedios.</p>
+<div class="row noprint" style="margin-bottom:12px"><div class="seg" role="group" aria-label="Tipo de influencias"><button aria-pressed="${!indirect}" id="tDir">Influencias directas</button><button aria-pressed="${indirect}" id="tInd">Influencias indirectas</button></div>
+<span class="mini" style="color:var(--ink-2)">Promedios: motricidad ${Z.mm.toFixed(1)} · dependencia ${Z.dm.toFixed(1)}</span></div>
+<div class="two"><div class="chart fade">${micmacSVG(indirect)}</div>
+<div>${card("enlace","Influyen y dependen mucho: son inestables y estratégicas. Interviene las que la organización controla.")}
+${card("poder","Mueven el sistema y dependen poco. Casi siempre externas: anticípalas.")}
+${card("resultado","Son efecto de las demás. Úsalas como indicadores; no las ataques directamente.")}
+${card("autonoma","Poco conectadas. Vigílalas o exclúyelas.")}</div></div>
+<h3>Tabla de resultados</h3>
+<div class="tbl-wrap"><table class="mini"><thead><tr><th>Variable</th><th>Motricidad</th><th>Dependencia</th><th>Zona</th><th>Qué hacer</th><th>Ranking directo</th><th>Ranking indirecto</th></tr></thead><tbody>
+${S.vars.map((v,i)=>`<tr><td><span class="code">${esc(v.code)}</span> ${esc(v.name)}</td><td>${mot[i]}</td><td>${dep[i]}</td><td><span class="tag" style="background:var(--${Z.z[i]})">${ZN[Z.z[i]]}</span></td><td>${ZACT[Z.z[i]]}</td><td>${r0[i]}</td><td>${r1[i]}${r1[i]<r0[i]?" ▲":r1[i]>r0[i]?" ▼":""}</td></tr>`).join("")}
+</tbody></table></div>
+<div class="hint" style="margin-top:16px"><b>Influencias indirectas:</b> la matriz se multiplica por sí misma para contar las influencias que pasan por una variable intermedia. Si una variable sube en el ranking indirecto, tiene influencia «oculta».</div>`;};
+function bindPlano(){const a=$("#tDir"),b=$("#tInd");if(a){a.onclick=()=>{indirect=false;render();};b.onclick=()=>{indirect=true;render();};}}
+
+V.incert=()=>{
+ if(S.vars.length<2)return `<h2>Incertidumbres críticas</h2><div class="empty">Primero agrega variables.</div>`;
+ const I=impacts();const sug=suggestAxes();
+ return `<h2>Incertidumbres críticas</h2>
+<p class="lead">Para pasar a la matriz de Schwartz necesitas saber qué tan <b>incierta</b> es cada variable. El <b>impacto</b> se toma de la motricidad del MICMAC (escalada de 1 a 5); puedes ajustarlo si el equipo lo considera necesario.</p>
+<div class="hint"><b>Alto impacto y alta incertidumbre</b> = incertidumbre crítica: de ahí salen los ejes. <b>Alto impacto y baja incertidumbre</b> = elemento predeterminado: estará en todos los escenarios. En la matriz de Schwartz los ejes deben ser variables del entorno que la organización no controla.</div>
+${thrUI()}
+<div class="chart fade" style="max-width:780px;margin-bottom:6px">${uncSVG()}</div>${legendUI()}<div class="tbl-wrap"><table class="mini"><thead><tr><th>Variable</th><th>Tipo</th><th>Impacto (MICMAC)</th><th>Ajuste manual</th><th>Incertidumbre (1 a 5)</th><th>Clasificación</th></tr></thead><tbody>
+${S.vars.map((v,i)=>`<tr><td><span class="code">${esc(v.code)}</span> ${esc(v.name)}</td><td>${esc(v.type)}</td><td>${I[i]}</td>
+<td><select style="min-width:84px" aria-label="Ajuste de impacto de ${esc(v.code)}" data-im="${i}"><option value="">Auto</option>${[1,2,3,4,5].map(n=>`<option ${+v.impMan===n?"selected":""}>${n}</option>`).join("")}</select></td>
+<td><select style="min-width:70px" aria-label="Incertidumbre de ${esc(v.code)}" data-un="${i}"><option value="0">—</option>${[1,2,3,4,5].map(n=>`<option ${+v.unc===n?"selected":""}>${n}</option>`).join("")}</select></td>
+<td>${+v.unc?classUnc(I[i],+v.unc):"Califica la incertidumbre"}${v.type==="Interna"&&+v.unc&&classUnc(I[i],+v.unc)==="Incertidumbre crítica"?' <span class="tag" style="background:var(--horizon)">Interna</span>':""}</td></tr>`).join("")}
+</tbody></table></div>
+<p style="margin-top:14px">${sug.length===2?`<b>Ejes sugeridos:</b> ${sug.map(id=>{const v=varById(id);return esc(v.code+" "+v.name);}).join(" y ")}. Los eliges en el siguiente paso.`:`<span class="err">Aún no hay dos incertidumbres críticas. Revisa las calificaciones o baja los umbrales.</span>`}</p>`;};
+function thrUI(){const sel=(id,k,opts)=>`<select id="${id}" style="width:80px">${opts.map(n=>`<option ${S.thr[k]==n?"selected":""}>${n}</option>`).join("")}</select>`;
+ return `<div class="row noprint" style="margin-bottom:14px"><label class="f" for="thI" style="margin:0">Impacto alto desde</label>${sel("thI","imp",[3,4,5])}
+<label class="f" for="thU" style="margin:0 0 0 12px">Incertidumbre alta desde</label>${sel("thU","unc",[3,4,5])}
+<label class="f" for="thM" style="margin:0 0 0 12px">Incertidumbre media desde</label>${sel("thM","med",[2,3,4])}</div>`;}
+function legendUI(){return `<div class="legend">${Object.entries(CCOL).map(([k,c])=>`<span><i class="sw" style="background:${c}"></i>${k}</span>`).join("")}</div>`;}
+function bindThr(){const a=$("#thI"),b=$("#thU"),c=$("#thM");if(a){a.onchange=()=>{S.thr.imp=+a.value;save();render();};b.onchange=()=>{S.thr.unc=+b.value;save();render();};c.onchange=()=>{S.thr.med=+c.value;save();render();};}}
+function bindIncert(){
+ document.querySelectorAll("[data-un]").forEach(el=>el.onchange=()=>{S.vars[+el.dataset.un].unc=+el.value;save();render();});
+ document.querySelectorAll("[data-im]").forEach(el=>el.onchange=()=>{S.vars[+el.dataset.im].impMan=el.value;save();render();});
+ bindThr();
+}
+
+V.schwartz=()=>{
+ if(S.vars.length<2)return `<h2>Matriz de Schwartz</h2><div class="empty">Primero agrega variables.</div>`;
+ const sug=suggestAxes();const ax=S.axes;const opt=sel=>`<option value="">Elige una variable</option>`+S.vars.map(v=>`<option value="${v.id}" ${sel===v.id?"selected":""}>${esc(v.code+" "+v.name)}${sug.includes(v.id)?" (sugerida)":""}</option>`).join("");
+ const X=varById(ax.x),Y=varById(ax.y);const same=ax.x&&ax.x===ax.y;
+ const I=impacts();const pre=S.vars.filter((v,i)=>v.type!=="Interna"&&+v.unc&&classUnc(I[i],+v.unc)==="Elemento predeterminado");
+ const quad=k=>{const e=S.esc[k];const combo={q1:[ax.yPos,ax.xPos],q2:[ax.yPos,ax.xNeg],q3:[ax.yNeg,ax.xNeg],q4:[ax.yNeg,ax.xPos]}[k];
+  return `<div class="quad ${e.rol}"><span class="pos">${QPOS[k]}: ${esc(combo[0]||"polo vertical")} + ${esc(combo[1]||"polo horizontal")}</span>
+  <input type="text" class="qn" aria-label="Nombre del escenario ${QPOS[k]}" placeholder="Nombre del escenario" data-q="${k}" data-qk="n" value="${esc(e.n)}">
+  <select aria-label="Rol del escenario" data-q="${k}" data-qk="rol">${ROLES.map(r=>`<option value="${r[0]}" ${e.rol===r[0]?"selected":""}>${r[1]}</option>`).join("")}</select>
+  <textarea aria-label="Narrativa" placeholder="Narrativa contada desde el año horizonte: qué pasó y por qué" data-q="${k}" data-qk="narr">${esc(e.narr)}</textarea>
+  <textarea aria-label="Qué se necesita para ganar" placeholder="Qué necesita la organización para ganar en este escenario" data-q="${k}" data-qk="ganar" style="min-height:60px">${esc(e.ganar)}</textarea></div>`;};
+ return `<h2>Matriz de Schwartz</h2>
+<p class="lead">Elige las dos incertidumbres críticas como ejes, define sus dos polos extremos y narra los cuatro escenarios que resultan de combinarlos.</p>
+<div class="grid2">
+ <div class="field"><label class="f" for="axX">Eje horizontal</label><select id="axX" data-ax="x">${opt(ax.x)}</select>
+  <div class="row" style="margin-top:8px"><input type="text" aria-label="Polo izquierdo" placeholder="Polo izquierdo (ej. aplicación flexible)" data-ax="xNeg" value="${esc(ax.xNeg)}"><input type="text" aria-label="Polo derecho" placeholder="Polo derecho (ej. exigencia plena)" data-ax="xPos" value="${esc(ax.xPos)}"></div></div>
+ <div class="field"><label class="f" for="axY">Eje vertical</label><select id="axY" data-ax="y">${opt(ax.y)}</select>
+  <div class="row" style="margin-top:8px"><input type="text" aria-label="Polo inferior" placeholder="Polo inferior (ej. precio bajo)" data-ax="yNeg" value="${esc(ax.yNeg)}"><input type="text" aria-label="Polo superior" placeholder="Polo superior (ej. precio alto)" data-ax="yPos" value="${esc(ax.yPos)}"></div></div>
+</div>
+${same?`<p class="err" role="alert">Los dos ejes deben ser variables distintas.</p>`:""}
+${[X,Y].some(v=>v&&v.type==="Interna")?`<p class="err" role="alert">Uno de los ejes es una variable interna. En Schwartz los ejes deben ser del entorno: lo interno va en las estrategias.</p>`:""}
+<p class="mini" style="color:var(--ink-2)">Prueba de independencia: ¿puede moverse un eje sin que el otro se mueva? Si uno arrastra al otro, cambia un eje.</p>
+<div class="sch">
+ <div></div><div class="ax top">↑ ${esc(Y?Y.code+" "+Y.name:"Eje vertical")}: ${esc(ax.yPos||"polo superior")}</div><div></div>
+ <div class="ax side">← ${esc(ax.xNeg||"polo izquierdo")}</div>${quad("q2")}${quad("q1")}<div class="ax side">${esc(ax.xPos||"polo derecho")} →<br>${esc(X?X.code+" "+X.name:"")}</div>
+ <div class="ax side"></div>${quad("q3")}${quad("q4")}<div class="ax side"></div>
+ <div></div><div class="ax bot">↓ ${esc(ax.yNeg||"polo inferior")}</div><div></div>
+</div>
+<h3>Elementos predeterminados del entorno (presentes en los cuatro escenarios)</h3>
+<p>${pre.length?pre.map(v=>`<span class="code">${esc(v.code)}</span> ${esc(v.name)}`).join(" · "):"Ninguno todavía. Califica la incertidumbre en el paso 5."}</p>`;};
+function bindSchwartz(){
+ document.querySelectorAll("[data-ax]").forEach(el=>el[el.tagName==="SELECT"?"onchange":"oninput"]=()=>{S.axes[el.dataset.ax]=el.value;save();if(el.tagName==="SELECT")render();else renderNav();});
+ document.querySelectorAll("[data-q]").forEach(el=>el[el.tagName==="SELECT"?"onchange":"oninput"]=()=>{S.esc[el.dataset.q][el.dataset.qk]=el.value;save();if(el.tagName==="SELECT")render();else renderNav();});
+}
+
+V.estrategias=()=>{
+ const names=["q1","q2","q3","q4"].map((k,i)=>S.esc[k].n||`Escenario ${i+1}`);
+ return `<h2>Estrategias e indicadores</h2>
+<p class="lead">Pregúntate para cada escenario: «si este fuera el futuro, ¿qué deberíamos haber hecho ya?». Las estrategias <b>robustas</b> sirven en todos; las <b>contingentes</b> se activan solo si un escenario empieza a ocurrir.</p>
+<div class="hint"><b>Conexión con MICMAC:</b> las acciones deben actuar sobre las variables de enlace que la organización controla. Las de resultado sirven como indicadores.</div>
+<h3>Estrategias</h3>
+${S.estr.length?`<div class="tbl-wrap"><table class="mini"><thead><tr><th>Estrategia</th><th style="width:140px">Tipo</th><th style="width:330px">Escenarios donde aplica</th><th style="width:60px"></th></tr></thead><tbody>
+${S.estr.map((e,i)=>`<tr><td><input type="text" aria-label="Estrategia ${i+1}" data-e="${i}" data-ek="t" value="${esc(e.t)}"></td>
+<td><select aria-label="Tipo" data-e="${i}" data-ek="tipo">${["Robusta","Contingente"].map(t=>`<option ${e.tipo===t?"selected":""}>${t}</option>`).join("")}</select></td>
+<td>${["q1","q2","q3","q4"].map((k,j)=>`<label class="chk"><input type="checkbox" data-ec="${i}" data-q="${k}" ${e.q&&e.q.includes(k)?"checked":""}>${esc(names[j])}</label>`).join("")}</td>
+<td><button class="btn danger" data-ed="${i}" aria-label="Quitar estrategia ${i+1}">Quitar</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Agrega al menos una estrategia.</div>`}
+<div class="row" style="margin-top:10px"><button class="btn" id="addE">Agregar estrategia</button></div>
+<h3>Indicadores de alerta temprana</h3>
+${S.ind.length?`<div class="tbl-wrap"><table class="mini"><thead><tr><th style="width:150px">Eje o tema</th><th>Indicador</th><th>Señal a vigilar</th><th>Hacia dónde se mueve</th><th style="width:130px">Umbral</th><th style="width:60px"></th></tr></thead><tbody>
+${S.ind.map((e,i)=>`<tr><td><input type="text" aria-label="Eje del indicador ${i+1}" data-n="${i}" data-nk="eje" value="${esc(e.eje)}"></td><td><input type="text" aria-label="Indicador ${i+1}" data-n="${i}" data-nk="t" value="${esc(e.t)}"></td><td><input type="text" aria-label="Señal" data-n="${i}" data-nk="s" value="${esc(e.s)}"></td>
+<td><input type="text" list="escList" aria-label="Hacia dónde se mueve" placeholder="Ej. hacia ${esc(names[0])}" data-n="${i}" data-nk="h" value="${esc(e.h)}"></td><td><input type="text" aria-label="Umbral" placeholder="Definir con datos propios" data-n="${i}" data-nk="u" value="${esc(e.u)}"></td>
+<td><button class="btn danger" data-nd="${i}" aria-label="Quitar indicador ${i+1}">Quitar</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Agrega al menos un indicador.</div>`}
+<datalist id="escList">${names.map(n=>`<option value="Hacia ${esc(n)}">`).join("")}</datalist>
+<div class="row" style="margin-top:10px"><button class="btn" id="addN">Agregar indicador</button></div>`;};
+function bindEstrategias(){
+ document.querySelectorAll("[data-e]").forEach(el=>el[el.tagName==="SELECT"?"onchange":"oninput"]=()=>{S.estr[+el.dataset.e][el.dataset.ek]=el.value;save();});
+ document.querySelectorAll("[data-ec]").forEach(el=>el.onchange=()=>{const e=S.estr[+el.dataset.ec];e.q=e.q||[];if(el.checked)e.q.push(el.dataset.q);else e.q=e.q.filter(x=>x!==el.dataset.q);save();});
+ document.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>{S.estr.splice(+b.dataset.ed,1);save();render();});
+ document.querySelectorAll("[data-n]").forEach(el=>el[el.tagName==="SELECT"?"onchange":"oninput"]=()=>{S.ind[+el.dataset.n][el.dataset.nk]=el.value;save();});
+ document.querySelectorAll("[data-nd]").forEach(b=>b.onclick=()=>{S.ind.splice(+b.dataset.nd,1);save();render();});
+ $("#addE").onclick=()=>{S.estr.push({t:"",tipo:"Robusta",q:[]});save();render();};
+ $("#addN").onclick=()=>{S.ind.push({eje:"",t:"",s:"",h:"",u:""});save();render();};
+}
+
+V.informe=()=>{
+ const ok=S.vars.length>=2&&S.M.some(r=>r.some(x=>+x>0));
+ const {mot,dep}=motDep(S.M);const Z=zones(mot,dep);const I=impacts();const X=varById(S.axes.x),Y=varById(S.axes.y);
+ const names=["q1","q2","q3","q4"].map((k,i)=>S.esc[k].n||`Escenario ${i+1}`);
+ setRoute();const pend=STEPS.map((s,i)=>["rubrica","informe"].includes(s.id)||stepDone(i)?null:s.t).filter(Boolean);
+ return `<div class="report"><h2>Informe final</h2>
+<p class="meta">${esc(S.meta.empresa||"Organización sin nombre")}${S.meta.sector?" · "+esc(S.meta.sector):""}${S.meta.horizonte?" · Horizonte "+esc(S.meta.horizonte):""}<br>${esc(S.meta.estudiante||"")} · ${new Date().toLocaleDateString("es-CO")}</p>
+${pend.length?`<p class="err noprint">Pasos pendientes: ${pend.join(", ")}.</p>`:""}
+<p class="noprint">Usa «Imprimir o guardar PDF» para entregar este informe, o descarga tu trabajo en .json para seguir editándolo.</p>
+<h3>Pregunta focal</h3><p>${esc(S.meta.pregunta||"Sin definir")}</p>${S.meta.descripcion?`<p>${esc(S.meta.descripcion)}</p>`:""}
+<p class="meta"><b>Método:</b> ${esc(METHODS[S.method]||"sin elegir")}</p>
+<h3>Variables</h3><table class="mini"><thead><tr><th>Código</th><th>Variable</th><th>Clase</th><th>Ámbito</th><th>Origen</th><th>Indicador</th></tr></thead><tbody>${S.vars.map(v=>`<tr><td class="code">${esc(v.code)}</td><td>${esc(v.name)}</td><td>${esc(v.kind)}</td><td>${esc(v.type)}</td><td>${esc(v.desc)}</td><td>${esc(v.ind)}</td></tr>`).join("")}</tbody></table>
+${S.vars.some(v=>v.def||v.pas||v.pre||v.fut)?`<h3>Fichas de las variables</h3><table class="mini"><thead><tr><th>Variable</th><th>Definición</th><th>Pasado</th><th>Presente</th><th>Posible futuro</th></tr></thead><tbody>${S.vars.map(v=>`<tr><td><b>${esc(v.code)}</b> ${esc(v.name)}</td><td>${esc(v.def)}</td><td>${esc(v.pas)}</td><td>${esc(v.pre)}</td><td>${esc(v.fut)}</td></tr>`).join("")}</tbody></table>`:""}
+${S.method==="anglo"?`<h3>Calificación de impacto e incertidumbre</h3><table class="mini"><thead><tr><th>Variable</th><th>Impacto</th><th>Incertidumbre</th><th>Puntaje</th><th>Clasificación</th></tr></thead><tbody>${S.vars.map(v=>`<tr><td>${esc(v.code+" "+v.name)}</td><td>${+v.imp||"—"}</td><td>${+v.unc||"—"}</td><td>${(+v.imp&&+v.unc)?v.imp*v.unc:"—"}</td><td>${(+v.imp&&+v.unc)?classUnc(+v.imp,+v.unc):"—"}</td></tr>`).join("")}</tbody></table>
+<h3>Mapa de impacto e incertidumbre</h3><div class="chart">${uncSVG()}</div>${legendUI()}`:ok?`<h3>Matriz de influencias directas</h3><div class="tbl-wrap"><table class="mini"><thead><tr><th></th>${S.vars.map(v=>`<th>${esc(v.code)}</th>`).join("")}<th>Motricidad</th></tr></thead><tbody>
+${S.vars.map((v,i)=>`<tr><th>${esc(v.code)}</th>${S.M[i].map((x,j)=>`<td style="text-align:center">${i===j?"—":x}</td>`).join("")}<td style="text-align:center"><b>${mot[i]}</b></td></tr>`).join("")}
+<tr><th>Dependencia</th>${dep.map(x=>`<td style="text-align:center"><b>${x}</b></td>`).join("")}<td></td></tr></tbody></table></div>
+<h3>Plano MICMAC</h3><div class="chart">${micmacSVG(false)}</div>
+<table class="mini" style="margin-top:10px"><thead><tr><th>Zona</th><th>Variables</th><th>Qué hacer</th></tr></thead><tbody>${["enlace","poder","resultado","autonoma"].map(k=>`<tr><td>${ZN[k]}</td><td>${S.vars.filter((v,i)=>Z.z[i]===k).map(v=>esc(v.code+" "+v.name)).join("; ")||"—"}</td><td>${ZACT[k]}</td></tr>`).join("")}</tbody></table>
+<h3>Impacto e incertidumbre</h3><div class="chart">${uncSVG()}</div>${legendUI()}`:`<p class="err">Falta calificar la matriz.</p>`}
+<h3>Matriz de escenarios de Schwartz</h3>
+<p>Eje horizontal: ${esc(X?X.code+" "+X.name:"sin definir")} (${esc(S.axes.xNeg)} ↔ ${esc(S.axes.xPos)}). Eje vertical: ${esc(Y?Y.code+" "+Y.name:"sin definir")} (${esc(S.axes.yNeg)} ↔ ${esc(S.axes.yPos)}).</p>
+<div class="sch"><div></div><div class="ax top">↑ ${esc(S.axes.yPos)}</div><div></div>
+<div class="ax side">← ${esc(S.axes.xNeg)}</div>${["q2","q1"].map(k=>repQ(k)).join("")}<div class="ax side">${esc(S.axes.xPos)} →</div>
+<div class="ax side"></div>${["q3","q4"].map(k=>repQ(k)).join("")}<div class="ax side"></div>
+<div></div><div class="ax bot">↓ ${esc(S.axes.yNeg)}</div><div></div></div>
+<h3>Estrategias</h3>${S.estr.length?`<table class="mini"><thead><tr><th>Estrategia</th><th>Tipo</th><th>Escenarios</th></tr></thead><tbody>${S.estr.map(e=>`<tr><td>${esc(e.t)}</td><td>${esc(e.tipo)}</td><td>${(e.q||[]).map(k=>esc(names[["q1","q2","q3","q4"].indexOf(k)])).join(", ")}</td></tr>`).join("")}</tbody></table>`:"<p>Sin estrategias.</p>"}
+<h3>Indicadores de alerta temprana</h3>${S.ind.length?`<table class="mini"><thead><tr><th>Eje</th><th>Indicador</th><th>Señal</th><th>Hacia dónde se mueve</th><th>Umbral</th></tr></thead><tbody>${S.ind.map(e=>`<tr><td>${esc(e.eje)}</td><td>${esc(e.t)}</td><td>${esc(e.s)}</td><td>${esc(e.h)}</td><td>${esc(e.u)}</td></tr>`).join("")}</tbody></table>`:"<p>Sin indicadores.</p>"}
+${(()=>{const RR=evalRubric();return `<h3>Evaluación automática</h3><p><b>Nota sugerida: ${fmtN(RR.nota)} / 5,0</b> (${lvl(RR.score)[1]}). La valida el docente.</p><table class="mini"><thead><tr><th>Criterio</th><th>Peso</th><th>Logro</th><th>Nivel</th><th>Para mejorar</th></tr></thead><tbody>${RR.crit.map(c=>`<tr><td>${esc(c.name)}</td><td>${c.w}%</td><td>${Math.round(c.score*100)}%</td><td>${lvl(c.score)[1]}</td><td>${c.fix.map(esc).join(" ")||"—"}</td></tr>`).join("")}</tbody></table>`;})()}
+<p class="mini" style="color:var(--ink-3);margin-top:24px">Generado con el Laboratorio de prospectiva (MICMAC y matriz de Peter Schwartz).</p></div>`;};
+function repQ(k){const e=S.esc[k];const rol=(ROLES.find(r=>r[0]===e.rol)||ROLES[0])[1];
+ return `<div class="quad ${e.rol}"><span class="pos">${QPOS[k]} · ${esc(rol)}</span><b style="font-family:var(--serif);font-size:1.1rem">${esc(e.n||"Sin nombre")}</b><span style="font-size:.92rem">${esc(e.narr)}</span>${e.ganar?`<span style="font-size:.88rem"><b>Para ganar:</b> ${esc(e.ganar)}</span>`:""}</div>`;}
+function bindInforme(){}
+
+V.calif=()=>{
+ if(!S.vars.length)return `<h2>Calificación</h2><div class="empty">Primero agrega variables en el paso 2.</div>`;
+ return `<h2>Calificación de impacto e incertidumbre</h2>
+<p class="lead">Califica cada variable de 1 a 5. <b>Impacto:</b> cuánto afectaría la pregunta focal. <b>Incertidumbre:</b> qué tan difícil es saber hacia dónde evolucionará.</p>
+<div class="hint"><b>Reglas:</b> alto impacto y alta incertidumbre = incertidumbre crítica (de ahí salen los ejes). Alto impacto e incertidumbre media = candidata a eje alterno. Alto impacto y baja incertidumbre = elemento predeterminado (aparece en todos los escenarios). Los dos ejes deben ser independientes entre sí.</div>
+${thrUI()}
+<div class="tbl-wrap"><table class="mini"><thead><tr><th>Variable</th><th>Ámbito</th><th>Impacto (1 a 5)</th><th>Incertidumbre (1 a 5)</th><th>Puntaje (I × U)</th><th>Clasificación</th></tr></thead><tbody>
+${S.vars.map((v,i)=>{const I=+v.imp||0,U=+v.unc||0;const c=I&&U?classUnc(I,U):"";return `<tr><td><span class="code">${esc(v.code)}</span> ${esc(v.name)}</td><td>${esc(v.type)}</td>
+<td><select style="min-width:70px" aria-label="Impacto de ${esc(v.code)}" data-ai="${i}"><option value="0">—</option>${[1,2,3,4,5].map(n=>`<option ${I===n?"selected":""}>${n}</option>`).join("")}</select></td>
+<td><select style="min-width:70px" aria-label="Incertidumbre de ${esc(v.code)}" data-au="${i}"><option value="0">—</option>${[1,2,3,4,5].map(n=>`<option ${U===n?"selected":""}>${n}</option>`).join("")}</select></td>
+<td>${I&&U?I*U:"—"}</td><td>${c?`<span class="tag" style="background:${CCOL[c]}">${c}</span>${v.type==="Interna"&&c==="Incertidumbre crítica"?' <span class="mini" style="color:var(--poder)">Interna: no sirve como eje</span>':""}`:"Falta calificar"}</td></tr>`;}).join("")}
+</tbody></table></div>`;};
+function bindCalif(){bindThr();
+ document.querySelectorAll("[data-ai]").forEach(el=>el.onchange=()=>{S.vars[+el.dataset.ai].imp=+el.value;save();render();});
+ document.querySelectorAll("[data-au]").forEach(el=>el.onchange=()=>{S.vars[+el.dataset.au].unc=+el.value;save();render();});}
+V.grafico=()=>{
+ if(!S.vars.length)return `<h2>Mapa de impacto e incertidumbre</h2><div class="empty">Primero agrega y califica variables.</div>`;
+ const I=impacts();const sug=suggestAxes();const pend=S.vars.filter(v=>!(+v.imp&&+v.unc));
+ const groups=Object.keys(CCOL).map(k=>[k,S.vars.filter((v,i)=>+v.unc&&+v.imp&&classUnc(I[i],+v.unc)===k)]);
+ return `<h2>Mapa de impacto e incertidumbre</h2>
+<p class="lead">Cada punto es una variable. Las líneas rojas marcan los umbrales: arriba a la derecha están las incertidumbres críticas, candidatas a ejes de la matriz de Schwartz.</p>
+${pend.length?`<p class="err">Faltan por calificar: ${pend.map(v=>esc(v.code)).join(", ")}.</p>`:""}
+<div class="two"><div><div class="chart fade">${uncSVG()}</div>${legendUI()}</div>
+<div>${groups.map(([k,vs])=>`<div class="zone-card" style="background:#F3F6F7"><h4><span class="sw" style="background:${CCOL[k]}"></span> ${k}</h4><div class="vs">${vs.map(v=>esc(v.code+" "+v.name)).join("; ")||"Ninguna"}</div></div>`).join("")}</div></div>
+<p style="margin-top:14px">${sug.length===2?`<b>Ejes sugeridos:</b> ${sug.map(id=>{const v=varById(id);return esc(v.code+" "+v.name);}).join(" y ")}. Antes de usarlos, comprueba que sean independientes: ¿puede moverse uno sin que se mueva el otro?`:`<span class="err">Aún no hay dos incertidumbres críticas del entorno. Revisa las calificaciones o los umbrales.</span>`}</p>`;};
+
+/* ---------- Rúbrica automática ---------- */
+const LEVELS=[[0.9,"Excelente","#2F7F78"],[0.7,"Bueno","#3E7CB1"],[0.5,"Aceptable","#C98A12"],[0,"Insuficiente","#B23A48"]];
+const lvl=x=>LEVELS.find(l=>x>=l[0]);
+const txt=t=>String(t??"").trim();
+const junk=t=>{t=txt(t).toLowerCase();return t.length<3||/^(.)\1+$/.test(t.replace(/\s/g,""))||/^(xxx+|asd+|test|prueba|n\/?a|na|ninguno|nada|ok|sdf+|qwe+)$/.test(t);};
+const ratio=(arr,f)=>arr.length?arr.filter(f).length/arr.length:0;
+const hasYear=t=>/\b(19|20)\d{2}\b/.test(t||"");
+const deacc=t=>txt(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const words=t=>deacc(t).split(/[^a-zñ]+/).filter(w=>w.length>=5);
+function evalRubric(){
+ const vars=S.vars,n=vars.length,fr=S.method==="frances",out=[];
+ const crit=(id,name,w,step,checks)=>{let sc=0,good=[],fix=[];checks.forEach(([wt,val,g,f])=>{const v=Math.max(0,Math.min(1,val));sc+=wt*v;(v>=0.99?good:fix).push(v>=0.99?g:f);});out.push({id,name,w,step,score:Math.round(sc*100)/100,good,fix});};
+ const m=S.meta;
+ crit("proy","Proyecto y pregunta focal",10,"proyecto",[
+  [0.2,!junk(m.empresa)?1:0,"La organización está identificada.","Escribe el nombre de la organización que estudias."],
+  [0.15,!junk(m.horizonte)?1:0,"Definiste el horizonte de tiempo.","Define el horizonte (por ejemplo, 2026 – 2031)."],
+  [0.3,txt(m.pregunta).length>=60?1:txt(m.pregunta).length>=30?0.5:0,"La pregunta focal es suficientemente específica.","Amplía la pregunta focal: debe nombrar la organización, la decisión que se quiere tomar y el horizonte."],
+  [0.1,/[¿?]/.test(m.pregunta)?1:0,"La pregunta focal está formulada como pregunta.","Formula la pregunta focal entre signos de interrogación."],
+  [0.15,hasYear(m.pregunta)?1:0,"La pregunta incluye el año horizonte.","Incluye en la pregunta el año horizonte (por ejemplo, «de aquí a 2031»)."],
+  [0.1,txt(m.descripcion).length>=40?1:0,"Describiste la organización.","Agrega una descripción breve de la organización: qué hace, tamaño, mercado."]]);
+ const names=vars.map(v=>deacc(v.name));const validN=ratio(vars,(v,i)=>!junk(v.name)&&names.indexOf(names[i])===i);
+ const ext=ratio(vars,v=>v.type!=="Interna"),hasInt=vars.some(v=>v.type==="Interna"),hasExt=vars.some(v=>v.type!=="Interna");
+ crit("vars","Inventario de variables",15,"variables",[
+  [0.35,n>=8&&n<=20?1:n>=6?0.6:n>=4?0.3:0,`Tienes ${n} variables, una cantidad adecuada.`,n>20?`Tienes ${n} variables: agrupa las parecidas para quedar entre 8 y 20.`:`Tienes ${n} variables: lo recomendado es entre 8 y 20.`],
+  [0.2,validN,"Todas las variables tienen un nombre claro y no repetido.","Revisa los nombres: hay variables sin nombre, repetidas o con texto de relleno (como «xxx»)."],
+  [0.15,ratio(vars,v=>v.kind),"Clasificaste cada variable como tendencia, factor de cambio o hecho portador.","Indica la clase de cada variable: tendencia, factor de cambio o hecho portador de futuro."],
+  [0.1,fr?(hasInt&&hasExt?1:0.4):(ext>=0.7?1:ext>=0.5?0.5:0),fr?"Incluiste variables internas y externas, como pide el método francés.":"La mayoría de tus variables son del entorno, como pide el método anglosajón.",fr?"El método francés estudia el sistema completo: incluye variables internas y externas.":"En el método anglosajón la mayoría de variables deben ser del entorno (externas)."],
+  [0.1,ratio(vars,v=>txt(v.desc).length>=10),"Documentaste el origen de cada variable.","Completa el origen o la descripción de cada variable."],
+  [0.1,ratio(vars,v=>txt(v.ind).length>=5),"Cada variable tiene un indicador para medirla.","Agrega un indicador medible para cada variable."]]);
+ const fp=v=>[v.pas,v.pre,v.fut].filter(x=>txt(x).length>=15).length/3;
+ crit("fichas","Fichas: definición, pasado, presente y futuro",10,"variables",[
+  [0.4,ratio(vars,v=>txt(v.def).length>=15),"Definiste cada variable.","Escribe la definición de cada variable en su ficha."],
+  [0.4,n?vars.reduce((a,v)=>a+fp(v),0)/n:0,"Describiste la evolución (pasado, presente y futuro) de cada variable.","Completa el pasado, el presente y el posible futuro de cada variable."],
+  [0.2,ratio(vars,v=>hasYear(v.pas)||hasYear(v.pre)),"Tus fichas incluyen datos con año.","Respalda el pasado y el presente con datos fechados (por ejemplo, «en 2020…», «en 2026…») y su fuente."]]);
+ const I=impacts(),U=vars.map(v=>+v.unc||0);
+ if(fr){const off=n*(n-1);let nz=0,vals=new Set();S.M.forEach((r,i)=>r.forEach((x,j)=>{if(i!==j&&+x>0){nz++;vals.add(+x);}}));const d=off?nz/off:0;
+  const {mot,dep}=motDep(S.M);const iso=vars.filter((v,i)=>mot[i]+dep[i]===0).map(v=>v.code);const sd=Math.sqrt(avg(mot.map(x=>(x-avg(mot))**2)));
+  crit("mid","Matriz de influencias (MICMAC)",15,"matriz",[
+   [0.35,d>=0.15&&d<=0.6?1:d>0.6&&d<=0.8?0.5:d>0.05&&d<0.15?0.5:0,`La matriz tiene una densidad razonable (${Math.round(d*100)}% de celdas con influencia).`,d>0.6?`El ${Math.round(d*100)}% de las celdas tiene influencia: probablemente estás calificando influencias indirectas. Califica solo las directas.`:`Solo el ${Math.round(d*100)}% de las celdas tiene influencia: revisa si faltan relaciones directas.`],
+   [0.2,vals.size>=3?1:vals.size===2?0.5:0,"Usaste toda la escala (débil, moderada y fuerte).","Usa toda la escala: distingue influencias débiles (1), moderadas (2) y fuertes (3)."],
+   [0.25,n&&!iso.length?1:0,"Todas las variables están conectadas con el sistema.",`Las variables ${iso.join(", ")} no influyen ni dependen de ninguna: revisa su calificación o sácalas.`],
+   [0.2,sd>=1?1:0,"La matriz discrimina: unas variables son más motrices que otras.","Todas las variables tienen casi la misma motricidad: la matriz no discrimina. Revisa las calificaciones."]]);}
+ else crit("calif","Calificación de impacto e incertidumbre",15,"calif",[
+   [0.4,ratio(vars,(v,i)=>I[i]&&U[i]),"Calificaste todas las variables.","Califica impacto e incertidumbre de todas las variables."],
+   [0.15,new Set(I.filter(Boolean)).size>=3?1:0.3,"El impacto discrimina entre variables.","Usa más valores de la escala de impacto: no todas las variables pesan igual."],
+   [0.15,new Set(U.filter(Boolean)).size>=3?1:0.3,"La incertidumbre discrimina entre variables.","Usa más valores de la escala de incertidumbre."],
+   [0.3,ratio(I.filter(Boolean),x=>x>=S.thr.imp)<=0.7?1:0.3,"No calificaste todo como de alto impacto: hay criterio de priorización.","Calificaste casi todo como de alto impacto. Prioriza: solo unas pocas variables deben serlo."]]);
+ const cls=vars.map((v,i)=>U[i]&&I[i]?classUnc(I[i],U[i]):"");
+ const critExt=vars.filter((v,i)=>cls[i]==="Incertidumbre crítica"&&v.type!=="Interna").length;
+ crit("inc","Incertidumbres críticas y elementos predeterminados",10,fr?"incert":"grafico",[
+  [0.5,critExt>=2?1:critExt===1?0.4:0,`Identificaste ${critExt} incertidumbres críticas del entorno.`,"Necesitas al menos dos incertidumbres críticas del entorno para construir la matriz de Schwartz."],
+  [0.25,cls.includes("Elemento predeterminado")?1:0,"Identificaste elementos predeterminados (estarán en todos los escenarios).","Identifica al menos un elemento predeterminado: alto impacto y baja incertidumbre."],
+  [0.25,fr?ratio(vars,v=>+v.unc):(new Set(cls.filter(Boolean)).size>=3?1:0.4),fr?"Calificaste la incertidumbre de todas las variables.":"Las variables se reparten en varias categorías.",fr?"Califica la incertidumbre de todas las variables.":"Casi todas las variables quedaron en la misma categoría: revisa la calificación."]]);
+ const X=varById(S.axes.x),Y=varById(S.axes.y),ax=S.axes;const ix=vars.indexOf(X),iy=vars.indexOf(Y);
+ const axc=i=>i<0?0:cls[i]==="Incertidumbre crítica"?1:cls[i]==="Candidata (eje alterno)"?0.5:0;
+ const poles=[ax.xNeg,ax.xPos,ax.yNeg,ax.yPos];
+ crit("ejes","Ejes de la matriz de Schwartz",10,"schwartz",[
+  [0.3,X&&Y&&X!==Y?1:0,"Elegiste dos ejes distintos.","Elige dos variables distintas como ejes."],
+  [0.2,X&&Y?((X.type!=="Interna")+(Y.type!=="Interna"))/2:0,"Los dos ejes son variables del entorno.","Un eje es una variable interna: en Schwartz los ejes deben ser del entorno; lo interno va en las estrategias."],
+  [0.25,(axc(ix)+axc(iy))/2,"Los ejes son incertidumbres críticas.","Usa como ejes las incertidumbres críticas (alto impacto y alta incertidumbre)."],
+  [0.15,ratio(poles,p=>!junk(p)),"Definiste los cuatro polos.","Define los dos polos extremos de cada eje."],
+  [0.1,new Set(poles.map(deacc).filter(Boolean)).size===4?1:0,"Los polos son distintos entre sí.","Los polos de un eje deben ser opuestos y distintos."]]);
+ const Q=["q1","q2","q3","q4"],E=Q.map(k=>S.esc[k]);
+ const combo={q1:[ax.yPos,ax.xPos],q2:[ax.yPos,ax.xNeg],q3:[ax.yNeg,ax.xNeg],q4:[ax.yNeg,ax.xPos]};
+ const coh=Q.map(k=>{const nar=deacc(S.esc[k].narr+" "+S.esc[k].n+" "+S.esc[k].ganar);const hits=combo[k].filter(p=>words(p).some(w=>new RegExp("\\b"+w.slice(0,4)).test(nar)));return hits.length/2;});
+ const roles=E.map(e=>e.rol);
+ crit("esc","Escenarios",20,"schwartz",[
+  [0.15,new Set(E.map(e=>deacc(e.n)).filter(x=>x&&!junk(x))).size/4,"Los cuatro escenarios tienen nombres distintos.","Ponle a cada escenario un nombre propio y evocador."],
+  [0.4,avg(E.map(e=>txt(e.narr).length>=150?1:txt(e.narr).length>=60?0.5:0)),"Las narrativas están desarrolladas.","Desarrolla las narrativas: cuenta qué pasó, por qué y cómo afecta a la organización (al menos tres o cuatro frases)."],
+  [0.15,avg(E.map(e=>txt(e.ganar).length>=15?1:0)),"Indicaste qué se necesita para ganar en cada escenario.","Indica qué necesita la organización para ganar en cada escenario."],
+  [0.1,roles.filter(r=>r==="apuesta").length===1?1:0,"Elegiste un escenario apuesta.",roles.includes("apuesta")?"Debe haber un solo escenario apuesta.":"Marca cuál es el escenario apuesta."],
+  [0.1,roles.some(r=>r==="adverso"||r==="cubrimiento")?1:0,"Reconociste un escenario adverso o de cubrimiento.","Identifica al menos un escenario adverso o de cubrimiento: la estrategia debe protegerse de él."],
+  [0.1,avg(coh),"Las narrativas mencionan los polos de su cuadrante.",`Sugerencia: haz explícito en la narrativa de cada escenario la combinación de polos de su cuadrante${coh.some(c=>c<1)?" (revisa: "+Q.filter((k,i)=>coh[i]<1).map(k=>QPOS[k].toLowerCase()).join("; ")+")":""}.`]]);
+ const rob=S.estr.filter(e=>e.tipo==="Robusta"&&!junk(e.t)),con=S.estr.filter(e=>e.tipo==="Contingente"&&!junk(e.t));
+ crit("estr","Estrategias e indicadores",10,"estrategias",[
+  [0.25,rob.some(e=>(e.q||[]).length===4)?1:rob.length?0.4:0,"Tienes estrategias robustas que sirven en los cuatro escenarios.",rob.length?"Una estrategia robusta debe aplicar en los cuatro escenarios: márcalos todos o cámbiala a contingente.":"Agrega al menos una estrategia robusta."],
+  [0.2,con.some(e=>(e.q||[]).length>=1&&(e.q||[]).length<=3)?1:0,"Tienes estrategias contingentes ligadas a escenarios específicos.","Agrega estrategias contingentes y marca en qué escenarios se activan."],
+  [0.15,S.estr.length>=3?1:S.estr.length/3,`Propusiste ${S.estr.length} estrategias.`,"Propón al menos tres estrategias."],
+  [0.2,S.ind.length>=3?1:S.ind.length?0.5:0,`Definiste ${S.ind.length} indicadores de alerta temprana.`,"Define al menos tres indicadores de alerta temprana."],
+  [0.1,ratio(S.ind,e=>!junk(e.s)&&!junk(e.h)),"Cada indicador dice qué señal vigilar y hacia dónde apunta.","Completa la señal y el escenario hacia el que apunta cada indicador."],
+  [0.1,ratio(S.ind,e=>!junk(e.u)),"Los indicadores tienen umbral.","Define un umbral para cada indicador: a partir de qué valor se activa la alerta."]]);
+ const tot=out.reduce((a,c)=>a+c.w*c.score,0)/100;
+ return {crit:out,score:tot,nota:Math.round(tot*50)/10};
+}
+const fmtN=x=>x.toFixed(1).replace(".",",");
+const DESC={proy:"Organización, horizonte, pregunta focal específica y descripción.",vars:"Entre 8 y 20 variables bien nombradas, clasificadas, con origen e indicador.",fichas:"Definición y evolución (pasado, presente, futuro) con datos fechados.",
+ mid:"Influencias directas con densidad razonable, uso de toda la escala y sin variables aisladas.",calif:"Impacto e incertidumbre calificados para todas las variables, con criterio de priorización.",
+ inc:"Al menos dos incertidumbres críticas del entorno y elementos predeterminados.",ejes:"Dos ejes distintos, del entorno, críticos y con polos opuestos.",
+ esc:"Cuatro escenarios con nombre, narrativa desarrollada, rol y coherencia con los polos.",estr:"Estrategias robustas y contingentes; indicadores con señal, dirección y umbral."};
+V.rubrica=()=>{
+ const R=evalRubric();setRoute();const pend=STEPS.map((s,i)=>["rubrica","informe"].includes(s.id)||stepDone(i)?null:s.t).filter(Boolean);
+ const L=lvl(R.score);
+ return `<h2>Rúbrica y retroalimentación</h2>
+<p class="lead">La aplicación revisa tu ejercicio con ocho criterios y te dice qué está bien y qué puedes mejorar. Corrige, vuelve a esta página y la nota se actualiza.</p>
+<div class="grade"><div class="big">${fmtN(R.nota)}<small> / 5,0</small></div><div><span class="tag" style="background:${L[2]}">${L[1]}</span>
+<p>${R.nota>=3?"Nota sugerida aprobatoria.":"Nota sugerida aún no aprobatoria (mínimo 3,0)."} ${pend.length?`<b>Es preliminar:</b> te faltan pasos (${pend.join(", ")}).`:"Completaste todos los pasos."}</p>
+<p class="mini">La rúbrica automática revisa que el trabajo esté completo y sea coherente en su forma. La calidad del análisis la valida tu docente.</p></div></div>
+${R.crit.map(c=>{const l=lvl(c.score);const si=STEPS.findIndex(s=>s.id===c.step);return `<div class="crit"><header><h4>${esc(c.name)}</h4><span class="mini">Peso ${c.w}% · ${Math.round(c.score*100)}% logrado · <span class="tag" style="background:${l[2]}">${l[1]}</span></span></header>
+<div class="bar"><i style="width:${Math.max(3,c.score*100)}%;background:${l[2]}"></i></div>
+<div class="fb"><div><h5>Lo que está bien</h5>${c.good.length?`<ul class="goodl">${c.good.map(g=>`<li>${esc(g)}</li>`).join("")}</ul>`:'<p class="mini">Aún nada en este criterio.</p>'}</div>
+<div><h5>Para mejorar</h5>${c.fix.length?`<ul class="fixl">${c.fix.map(g=>`<li>${esc(g)}</li>`).join("")}</ul>`:'<p class="mini">Nada pendiente. ¡Bien hecho!</p>'}${c.fix.length&&si>=0?`<button class="btn sec noprint" style="margin-top:8px" data-goto="${si}">Ir a ${esc(STEPS[si].t)}</button>`:""}</div></div></div>`;}).join("")}
+<details class="rub"><summary>Ver la rúbrica completa (criterios, pesos y niveles)</summary>
+<div class="tbl-wrap"><table class="mini"><thead><tr><th>Criterio</th><th>Peso</th><th>Qué se espera</th></tr></thead><tbody>${R.crit.map(c=>`<tr><td>${esc(c.name)}</td><td>${c.w}%</td><td>${DESC[c.id]}</td></tr>`).join("")}</tbody></table></div>
+<p class="mini">Niveles por criterio: Excelente (90% o más), Bueno (70% a 89%), Aceptable (50% a 69%), Insuficiente (menos de 50%). Nota = suma ponderada de los criterios, en escala de 0,0 a 5,0.</p></details>`;};
+function bindRubrica(){document.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>go(+b.dataset.goto));}
+
+const BIND={rubrica:bindRubrica,calif:bindCalif,grafico:()=>{},proyecto:bindProyecto,variables:bindVariables,matriz:bindMatriz,plano:bindPlano,incert:bindIncert,schwartz:bindSchwartz,estrategias:bindEstrategias,informe:bindInforme};
+function ensureM(){const n=S.vars.length;S.M=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?0:(+((S.M[i]||[])[j])||0)));}
+function banners(){let b="";
+ if(!STORAGE_OK)b+=`<div class="banner warn" role="alert"><b>Este navegador no está guardando tu trabajo.</b> ${IN_FRAME?`La aplicación está abierta dentro de otra página. <a href="${esc(location.href)}" target="_blank" rel="noopener">Ábrela en una pestaña nueva</a> para que se guarde.`:"Puede ser una ventana privada o un equipo con restricciones."} Mientras tanto, usa «Descargar mi trabajo» con frecuencia.</div>`;
+ else if(IN_FRAME)b+=`<div class="banner info">La aplicación está abierta dentro de otra página. Si algo no se guarda, <a href="${esc(location.href)}" target="_blank" rel="noopener">ábrela en una pestaña nueva</a>.</div>`;
+ b+=`${CL.token||reviewMode?"":`<div class="banner info noprint">Si no conectas tu trabajo a la nube, se guarda solo en este navegador y en este equipo. Conéctalo abajo con el código de tu grupo, o usa <b>Descargar mi trabajo (.json)</b>.</div>`}`;return b;}
+function reviewBar(){return reviewMode?`<div class="banner warn noprint">Modo revisión: estás viendo el trabajo de <b>${esc(S.meta.estudiante||"un alumno")}</b>. Tus cambios no se guardan en su entrega. <button class="btn sec" id="endRev" style="margin-left:8px">Volver a la lista de trabajos</button></div>`:"";}
+function render(){$("header.top .row").style.display=teacher?"none":"";if(teacher){$("#view").innerHTML=V.docente();bindDocente();renderNav();document.title="Modo docente · Laboratorio de prospectiva";return;}
+ setRoute();ensureM();const id=STEPS[S.step].id;$("#view").innerHTML=`${reviewBar()}${id==="proyecto"||!STORAGE_OK||IN_FRAME?banners():""}<section aria-labelledby="h">${V[id]()}</section>`;const er=$("#endRev");if(er)er.onclick=()=>{reviewMode=false;S=blank();save();teacher=true;setCloud("");render();};const h=$("#view h2");if(h)h.id="h";BIND[id]();renderNav();document.title=STEPS[S.step].t+" · Laboratorio de prospectiva";}
+
+/* ---------- Archivo ---------- */
+$("#bExport").onclick=()=>{S.savedAt=new Date().toISOString();const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);a.download=("prospectiva_"+(S.meta.estudiante||S.meta.empresa||"trabajo")).replace(/[^\wáéíóúñÁÉÍÓÚÑ-]+/g,"_")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);msg("Archivo descargado.");};
+$("#bImport").onclick=()=>$("#fImport").click();
+$("#fImport").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.vars)||!Array.isArray(d.M))throw 0;S=norm(d);teacher=false;save();render();msg("Trabajo abierto: "+f.name);}catch(err){tell("Ese archivo no es un trabajo de esta aplicación. Elige un .json descargado con «Descargar mi trabajo».");}};r.readAsText(f);e.target.value="";};
+$("#bReset").onclick=()=>CL.token&&!reviewMode?tell("Tu trabajo está conectado a la nube. Para empezar de cero, primero desconecta este navegador en el paso 1."):ask("Esto borra todo el ejercicio de este navegador. Si quieres conservarlo, descárgalo antes. ¿Empezar de cero?","Borrar y empezar").then(v=>{if(v){S=blank();teacher=false;save();render();}});
+function loadExample(m){if(CL.token&&!reviewMode){tell("Tu trabajo está conectado a la nube: cargar el ejemplo lo reemplazaría en la entrega. Si quieres ver el ejemplo, primero desconecta este navegador (paso 1) o ábrelo en una ventana privada.");return;}const doIt=()=>{S=m==="anglo"?exampleAnglo():example();S.step=0;teacher=false;save();render();msg("Ejemplo cargado: "+METHODS[m]+".");};
+ if(S.vars.length&&!(S.meta.estudiante==="Ejemplo del docente"))ask("El ejemplo reemplaza tu trabajo actual. Si quieres conservarlo, descárgalo antes. ¿Cargar el ejemplo?","Cargar ejemplo").then(v=>{if(v)doIt();});else doIt();}
+$("#bExample").onclick=()=>{if(!S.method){go(0);msg("Elige un método para ver su ejemplo resuelto.");return;}loadExample(S.method);};
+
+
+
+/* ---------- Nube (Supabase) ---------- */
+const SB={url:"https://zmgitsmngdjpacvrxfkx.supabase.co",key:"sb_publishable_KAx-Q9YdVDBOM99ahIt-gg_lE13czGu"};
+const CKEY=KEY+"_nube";
+let CL=(()=>{try{return JSON.parse(localStorage.getItem(CKEY)||"null")||{};}catch(e){return {};}})();
+let reviewMode=false,cloudTimer=null,cloudState="";
+const saveCL=()=>{try{localStorage.setItem(CKEY,JSON.stringify(CL));}catch(e){}};
+const ERRS={grupo_invalido:"Ese código de grupo no existe o está cerrado. Pídeselo a tu docente.",codigo_invalido:"El código de recuperación no es válido.",estudiante_requerido:"Escribe tu nombre completo en el paso 1 antes de guardar en la nube.",
+ trabajo_muy_grande:"El trabajo es demasiado grande para guardarlo.",clave_incorrecta:"La clave de docente no es correcta.",clave_corta:"La nueva clave debe tener al menos 10 caracteres."};
+async function rpc(fn,args){let r;try{r=await fetch(`${SB.url}/rest/v1/rpc/${fn}`,{method:"POST",headers:{apikey:SB.key,"Content-Type":"application/json"},body:JSON.stringify(args)});}
+ catch(e){throw new Error("Sin conexión con el servidor. Revisa tu internet e inténtalo de nuevo.");}
+ const t=await r.text();let j=null;try{j=t?JSON.parse(t):null;}catch(e){}
+ if(!r.ok){const m=(j&&(j.message||j.hint))||t||("Error "+r.status);const k=Object.keys(ERRS).find(k=>m.includes(k));throw new Error(k?ERRS[k]:"El servidor respondió con un error: "+m);}
+ return j;}
+function newToken(){const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";const a=new Uint32Array(10);crypto.getRandomValues(a);return Array.from(a,x=>A[x%A.length]).join("");}
+const fmtCode=t=>t?t.slice(0,5)+"-"+t.slice(5):"";
+function setCloud(t){cloudState=t;const el=$("#cloudState");if(el)el.textContent=t;const sd=$("#cloudSide");if(sd)sd.textContent=reviewMode?"Revisando un trabajo (sin nube)":(CL.token?(t||"Nube: conectada · grupo "+CL.grupo):"Nube: sin conectar");}
+function payloadNota(){try{return S.method?evalRubric().nota:null;}catch(e){return null;}}
+async function cloudSave(manual){
+ if(reviewMode||!CL.token||!CL.grupo)return;
+ if(!txt(S.meta.estudiante)){setCloud("Nube: escribe tu nombre en el paso 1 para guardar.");return;}
+ setCloud("Nube: guardando…");
+ try{const d=JSON.parse(JSON.stringify(S));d.savedAt=new Date().toISOString();
+  const t=await rpc("pro_guardar",{p_token:CL.token,p_grupo:CL.grupo,p_estudiante:S.meta.estudiante,p_metodo:S.method||null,p_org:S.meta.empresa||null,p_nota:payloadNota(),p_data:d});
+  CL.last=t;saveCL();setCloud("Nube: guardado "+new Date(t).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"}));
+  if(manual)tell("Tu trabajo quedó guardado en la nube. Tu docente ya puede verlo.");}
+ catch(e){setCloud("Nube: no se pudo guardar. "+e.message);if(manual)tell(e.message);}}
+function queueCloud(){if(reviewMode||!CL.token)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudSave(false),4000);}
+window.addEventListener("online",()=>queueCloud());
+function cloudBox(){
+ if(reviewMode)return `<div class="banner warn">Estás revisando el trabajo de un alumno: los cambios no se guardan en la nube.</div>`;
+ if(CL.token)return `<div class="mcard" style="max-width:980px;margin-bottom:22px"><h4>Entrega en la nube: conectada</h4>
+<p>Grupo <b>${esc(CL.grupo)}</b>${CL.gname?" · "+esc(CL.gname):""}. Tu trabajo se guarda automáticamente y tu docente puede verlo.</p>
+<p>Tu código de recuperación: <b style="font-size:1.25rem;letter-spacing:.06em;font-variant-numeric:tabular-nums">${fmtCode(CL.token)}</b><br><span class="mini">Anótalo: con este código continúas tu trabajo desde otro computador. No lo compartas.</span></p>
+<p class="mini" id="cloudState">${esc(cloudState||"")}</p>
+<div class="row"><button class="btn" id="cSave">Guardar ahora en la nube</button><button class="btn sec" id="cOff">Desconectar este navegador</button></div></div>`;
+ return `<div class="mcard" style="max-width:980px;margin-bottom:22px"><h4>Entrega en la nube</h4>
+<p>Conecta tu trabajo con tu grupo para que se guarde en la nube y tu docente pueda verlo. Necesitas el <b>código del grupo</b> que te da tu docente y tu nombre completo.</p>
+<div class="grid2" style="max-width:none"><div class="field" style="margin:0"><label class="f" for="cName">Nombre completo</label><input type="text" id="cName" value="${esc(S.meta.estudiante)}"></div>
+<div class="field" style="margin:0"><label class="f" for="cGroup">Código del grupo</label><input type="text" id="cGroup" autocomplete="off" placeholder="Ej. PREFIN26020600029"></div></div>
+<div class="row" style="margin-top:12px"><button class="btn" id="cOn">Conectar y guardar</button></div>
+<details class="rub" style="margin-top:10px"><summary>Ya empecé en otro computador: continuar con mi código</summary>
+<div class="row" style="margin-top:8px"><input type="text" id="cCode" placeholder="Código de recuperación (ej. ABCDE-FGHJK)" style="max-width:320px"><button class="btn sec" id="cRec">Continuar mi trabajo</button></div></details>
+<p class="err" id="cErr" role="alert"></p></div>`;}
+function bindCloud(){
+ const on=$("#cOn"),rec=$("#cRec"),sv=$("#cSave"),off=$("#cOff"),err=m=>{const e=$("#cErr");if(e)e.textContent=m;};
+ if(on)on.onclick=async()=>{const name=txt($("#cName").value),g=txt($("#cGroup").value).toUpperCase();
+  if(name.length<5||!name.includes(" ")){err("Escribe tu nombre completo (nombre y apellido).");return;}if(!g){err("Escribe el código del grupo.");return;}
+  on.disabled=true;err("");try{const gname=await rpc("pro_grupo_info",{p_grupo:g});if(!gname){err(ERRS.grupo_invalido);on.disabled=false;return;}
+   S.meta.estudiante=name;save();CL={grupo:g,gname,token:newToken()};saveCL();await cloudSave(false);
+   if(cloudState.startsWith("Nube: guardado")){render();tell(`Listo. Tu trabajo quedó conectado al grupo ${g}. Tu código de recuperación es ${fmtCode(CL.token)}: anótalo para continuar desde otro computador.`);}
+   else{err(cloudState.replace("Nube: ",""));CL={};saveCL();on.disabled=false;}}
+  catch(e){err(e.message);on.disabled=false;}};
+ if(rec)rec.onclick=async()=>{const code=txt($("#cCode").value).toUpperCase().replace(/[^A-Z0-9]/g,"");if(code.length<8){err("Escribe el código completo.");return;}
+  rec.disabled=true;try{const r=await rpc("pro_recuperar",{p_token:code});if(!r){err("No encontramos un trabajo con ese código.");rec.disabled=false;return;}
+   const ok=!S.vars.length||await ask(`Encontramos el trabajo de ${r.estudiante} (grupo ${r.grupo}). Reemplazará lo que tienes en este navegador. ¿Continuar?`,"Continuar mi trabajo");
+   if(!ok){rec.disabled=false;return;}S=norm(r.data);CL={grupo:r.grupo,token:code,last:r.actualizado};saveCL();save();setCloud("Nube: trabajo recuperado");render();}
+  catch(e){err(e.message);rec.disabled=false;}};
+ if(sv)sv.onclick=()=>cloudSave(true);
+ if(off)off.onclick=()=>ask(`Este navegador dejará de guardar en la nube. Tu trabajo sigue en el servidor y puedes retomarlo con tu código ${fmtCode(CL.token)}. ¿Desconectar?`,"Desconectar").then(v=>{if(v){CL={};saveCL();setCloud("");render();}});
+}
+
+/* ---------- Modo docente ---------- */
+let teacher=false,subs=[];
+function withState(d,f){const keep=S;try{S=d;setRoute();return f();}finally{S=keep;setRoute();}}
+function summarize(d,name){return withState(d,()=>{const R=evalRubric();const done=STEPS.filter((s,i)=>!["rubrica","informe"].includes(s.id)&&stepDone(i)).length;const tot=STEPS.filter(s=>!["rubrica","informe"].includes(s.id)).length;
+ return {file:name,d,est:d.meta.estudiante||"(sin nombre)",org:d.meta.empresa||"",met:METHODS[d.method]||"Sin método",nota:R.nota,lvl:lvl(R.score)[1],crit:R.crit,done:`${done} de ${tot}`,fecha:d.savedAt?new Date(d.savedAt).toLocaleString("es-CO"):"—"};});}
+V.docente=()=>`<h2>Modo docente: revisar trabajos</h2>
+<p class="lead">Revisa los trabajos que tus alumnos guardaron en la nube, o carga archivos .json que te hayan enviado. La aplicación recalcula la nota de cada trabajo con la rúbrica.</p>
+<div class="mcard" style="max-width:980px;margin-bottom:22px"><h4>Trabajos en la nube</h4>
+${tKey?`<div class="row"><label class="f" for="tGrp" style="margin:0">Grupo</label><select id="tGrp" style="max-width:360px"><option value="">Todos los grupos</option>${tGroups.map(g=>`<option value="${esc(g.codigo)}" ${tFilter===g.codigo?"selected":""}>${esc(g.codigo)} · ${esc(g.nombre)} (${g.trabajos})</option>`).join("")}</select>
+<button class="btn" id="tRefresh">Actualizar lista</button><button class="btn sec" id="tLogout">Cerrar sesión docente</button></div>
+<details class="rub"><summary>Administrar grupos y clave</summary>
+<div class="tbl-wrap" style="margin:8px 0"><table class="mini"><thead><tr><th>Código del grupo (lo usan los alumnos)</th><th>Nombre</th><th>Trabajos</th><th>Estado</th><th></th></tr></thead><tbody>
+${tGroups.map(g=>`<tr><td class="code">${esc(g.codigo)}</td><td>${esc(g.nombre)}</td><td>${g.trabajos}</td><td>${g.activo?"Abierto":"Cerrado (no recibe trabajos)"}</td><td><button class="btn sec" data-gtog="${esc(g.codigo)}">${g.activo?"Cerrar":"Abrir"}</button></td></tr>`).join("")}</tbody></table></div>
+<div class="row"><input type="text" id="gNew" placeholder="Código nuevo (ej. PREFIN2027010001)" style="max-width:260px"><input type="text" id="gName" placeholder="Nombre del grupo" style="max-width:300px"><button class="btn sec" id="gAdd">Crear grupo</button></div>
+<div class="row" style="margin-top:10px"><input type="password" id="pNew" placeholder="Nueva clave de docente (mínimo 10 caracteres)" style="max-width:360px" autocomplete="new-password"><button class="btn sec" id="pChg">Cambiar clave</button></div></details>`
+:`<div class="row"><input type="password" id="tPass" placeholder="Clave de docente" style="max-width:320px" autocomplete="current-password"><button class="btn" id="tIn">Ver trabajos de la nube</button></div>`}
+<p class="err" id="tErr" role="alert"></p></div>
+<h3>Lista de trabajos</h3>
+<div class="row" style="margin-bottom:16px"><button class="btn sec" id="tLoad">Cargar trabajos (.json)</button>${subs.length?`<button class="btn sec" id="tCsv">Descargar consolidado (.csv)</button><button class="btn sec" id="tClear">Limpiar lista</button>`:""}<button class="btn sec" id="tBack">Volver a mi ejercicio</button></div>
+${subs.length?`<div class="tbl-wrap"><table class="mini"><thead><tr><th>Estudiante</th><th>Organización</th><th>Método</th><th>Pasos completos</th><th>Nota</th><th>Nivel</th><th>Guardado</th><th></th></tr></thead><tbody>
+${subs.map((x,i)=>`<tr><td><b>${esc(x.est)}</b><br><span class="mini" style="color:var(--ink-3)">${esc(x.file)}</span></td><td>${esc(x.org)}</td><td>${esc(x.met)}</td><td>${x.done}</td><td><b>${fmtN(x.nota)}</b></td><td>${x.lvl}</td><td>${esc(x.fecha)}</td><td><button class="btn sec" data-open="${i}">Abrir</button>${x.token?` <button class="btn danger" data-delw="${i}">Eliminar</button>`:""}</td></tr>`).join("")}
+</tbody></table></div>
+<h3>Detalle por criterio</h3><div class="tbl-wrap"><table class="mini"><thead><tr><th>Estudiante</th>${subs[0].crit.map(c=>`<th>${esc(c.name)} (${c.w}%)</th>`).join("")}</tr></thead><tbody>
+${subs.map(x=>`<tr><td>${esc(x.est)}</td>${x.crit.map(c=>`<td>${Math.round(c.score*100)}%</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+<p class="mini">«Abrir» carga el trabajo del alumno en modo revisión: puedes recorrer sus pasos, pero tus cambios no se guardan en su entrega.</p>`
+:`<div class="empty">Aún no hay trabajos en la lista. Entra con tu clave para ver los de la nube, o carga archivos .json.</div>`}`;
+
+let tKey="",tGroups=[],tFilter="";
+async function tFetch(){const rows=await rpc("pro_admin_listar",{p_clave:tKey,p_grupo:tFilter||null});tGroups=await rpc("pro_admin_grupos",{p_clave:tKey});
+ subs=subs.filter(x=>!x.token).concat((rows||[]).map(r=>{const x=summarize(norm(r.data||{}),r.grupo);x.token=r.token;x.est=r.estudiante;x.fecha=new Date(r.actualizado).toLocaleString("es-CO");return x;}));
+ subs.sort((a,b)=>a.est.localeCompare(b.est,"es"));}
+function bindDocenteCloud(){const err=m=>{const e=$("#tErr");if(e)e.textContent=m;};
+ const tin=$("#tIn");if(tin){const go1=async()=>{const k=$("#tPass").value;if(!k){err("Escribe la clave de docente.");return;}tin.disabled=true;err("Consultando…");
+   try{tKey=k;await tFetch();err("");render();}catch(e){tKey="";err(e.message);tin.disabled=false;}};tin.onclick=go1;$("#tPass").onkeydown=e=>{if(e.key==="Enter")go1();};}
+ const rf=$("#tRefresh");if(rf)rf.onclick=async()=>{err("Consultando…");try{await tFetch();render();}catch(e){err(e.message);}};
+ const gs=$("#tGrp");if(gs)gs.onchange=async()=>{tFilter=gs.value;err("Consultando…");try{await tFetch();render();}catch(e){err(e.message);}};
+ const lo=$("#tLogout");if(lo)lo.onclick=()=>{tKey="";tGroups=[];subs=subs.filter(x=>!x.token);render();};
+ document.querySelectorAll("[data-gtog]").forEach(b=>b.onclick=async()=>{const g=tGroups.find(x=>x.codigo===b.dataset.gtog);try{await rpc("pro_admin_guardar_grupo",{p_clave:tKey,p_codigo:g.codigo,p_nombre:g.nombre,p_activo:!g.activo});await tFetch();render();}catch(e){err(e.message);}});
+ const ga=$("#gAdd");if(ga)ga.onclick=async()=>{const c=txt($("#gNew").value).toUpperCase().replace(/\s+/g,"");if(c.length<3){err("El código del grupo debe tener al menos 3 caracteres.");return;}
+  try{await rpc("pro_admin_guardar_grupo",{p_clave:tKey,p_codigo:c,p_nombre:txt($("#gName").value),p_activo:true});await tFetch();render();tell(`Grupo ${c} creado. Comparte ese código con tus alumnos.`);}catch(e){err(e.message);}};
+ const pc=$("#pChg");if(pc)pc.onclick=async()=>{const n=$("#pNew").value;if(n.length<10){err(ERRS.clave_corta);return;}
+  try{await rpc("pro_admin_cambiar_clave",{p_clave:tKey,p_nueva:n});tKey=n;$("#pNew").value="";tell("Clave de docente cambiada. Guárdala en un lugar seguro: no se puede recuperar, solo cambiar.");}catch(e){err(e.message);}};
+ document.querySelectorAll("[data-delw]").forEach(b=>b.onclick=()=>{const x=subs[+b.dataset.delw];ask(`¿Eliminar de la nube el trabajo de ${x.est} (grupo ${x.file})? No se puede deshacer.`,"Eliminar").then(async ok=>{if(!ok)return;try{await rpc("pro_admin_eliminar_trabajo",{p_clave:tKey,p_token:x.token});await tFetch();render();}catch(e){err(e.message);}});});
+}
+function bindDocente(){
+ bindDocenteCloud();
+ $("#tLoad").onclick=()=>$("#fTeacher").click();
+ $("#tBack").onclick=()=>{teacher=false;render();};
+ const c=$("#tClear");if(c)c.onclick=()=>{subs=[];render();};
+ const v=$("#tCsv");if(v)v.onclick=()=>{const q=t=>`"${String(t).replace(/"/g,'""')}"`;const head=["Estudiante","Archivo","Organización","Método","Pasos completos","Nota","Nivel","Guardado",...subs[0].crit.map(c=>c.name+" (%)")];
+  const rows=subs.map(x=>[x.est,x.file,x.org,x.met,x.done,fmtN(x.nota),x.lvl,x.fecha,...x.crit.map(c=>Math.round(c.score*100))]);
+  const csv="﻿"+[head,...rows].map(r=>r.map(q).join(";")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="notas_prospectiva.csv";a.click();};
+ document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>ask(`Vas a abrir el trabajo de ${subs[+b.dataset.open].est} en modo revisión. Reemplaza lo que tengas en este navegador. ¿Continuar?`,"Abrir trabajo").then(ok=>{if(!ok)return;reviewMode=true;S=norm(JSON.parse(JSON.stringify(subs[+b.dataset.open].d)));S.step=0;teacher=false;save();setCloud("");render();msg("Revisando: "+subs[+b.dataset.open].est);}));
+}
+$("#bTeacher").onclick=()=>{teacher=true;render();window.scrollTo({top:0});};
+$("#fTeacher").onchange=async e=>{const files=[...e.target.files];const bad=[];
+ for(const f of files){try{const d=JSON.parse(await f.text());if(!Array.isArray(d.vars))throw 0;subs.push(summarize(norm(d),f.name));}catch(err){bad.push(f.name);}}
+ subs.sort((a,b)=>a.est.localeCompare(b.est,"es"));e.target.value="";render();if(bad.length)tell("No se pudieron leer estos archivos: "+bad.join(", ")+". Deben ser .json descargados desde la aplicación.");};
+
+/* ---------- Ejemplo resuelto ---------- */
+function example(){
+ const vs=[["Precio internacional y diferencial del café","Externa","Bolsa de Nueva York y prima del café colombiano",4],["Tasa de cambio (TRM)","Externa","Política monetaria y flujos de dólares",3],
+ ["Cambio climático y productividad de las fincas","Externa","Lluvias, sequías, plagas",2],["Exigencias de trazabilidad y no deforestación (EUDR)","Externa","Reglamento europeo que aplica desde el 30 de diciembre de 2026",4],
+ ["Relevo generacional de los asociados","Mixta","Envejecimiento de caficultores",4],["Costo de fertilizantes e insumos","Externa","Mercado internacional de fertilizantes",3],
+ ["Participación en cafés especiales","Mixta","Demanda de cafés de origen",3],["Capacidad de trazabilidad digital de la cooperativa","Interna","Georreferenciación de fincas",2],
+ ["Fidelidad de los asociados","Interna","Competencia de compradores particulares",3],["Solidez financiera de la cooperativa","Interna","Márgenes, cartera y capital",2]];
+ const M=[[0,0,0,0,2,1,1,1,3,3],[2,0,0,0,1,2,1,0,1,2],[2,0,0,1,2,1,2,0,1,2],[1,0,0,0,1,0,2,3,2,2],[0,0,0,0,0,0,2,2,3,2],[0,0,0,0,1,0,0,0,1,2],[1,0,0,0,2,0,0,2,2,2],[1,0,0,0,1,0,3,0,2,2],[0,0,0,0,1,0,1,1,0,3],[0,0,0,0,1,0,1,2,3,0]];
+ const s=blank();s.method="frances";s.meta={estudiante:"Ejemplo del docente",empresa:"Coocafé Suroeste (cooperativa ficticia)",sector:"Café",horizonte:"2026 – 2032",
+  pregunta:"¿Cómo debe Coocafé Suroeste asegurar la permanencia de sus asociados y su sostenibilidad financiera de aquí a 2032?",
+  descripcion:"Cooperativa cafetera ficticia del Suroeste antioqueño, con unos 3.000 asociados, trilladora, almacenes de insumos y una marca propia de café especial."};
+ const kinds=["Factor de cambio","Tendencia","Tendencia","Hecho portador de futuro","Tendencia","Factor de cambio","Tendencia","Factor de cambio","Factor de cambio","Factor de cambio"];
+ s.vars=vs.map((v,i)=>({id:"v"+(i+1),code:"V"+(i+1),name:v[0],type:v[1],desc:v[2],unc:v[3],impMan:"",imp:0,kind:kinds[i],ind:""}));s.M=M;
+ const FIC={"0": ["Precio que recibe el caficultor por carga, formado por el precio en la Bolsa de Nueva York, la tasa de cambio y la prima del café colombiano.", "Octubre de 2025: el precio interno promedió unos $2,95 millones por carga, récord para ese mes (FNC).", "Junio de 2026: promedió unos $2,09 millones por carga, 22,7% menos que un año antes (FNC).", "Incierto: depende de las cosechas de Brasil, la tasa de cambio y el diferencial de calidad."], "3": ["Obligación de demostrar que el café exportado a Europa no proviene de tierras deforestadas, con trazabilidad y georreferenciación.", "Reglamento europeo aprobado en 2023 y aplazado dos veces.", "Empieza a aplicarse el 30 de diciembre de 2026 para operadores medianos y grandes.", "El café sin trazabilidad podría quedar por fuera del mercado europeo o perder precio."], "4": ["Llegada de nuevas generaciones a la caficultura que reemplacen a los productores actuales.", "Desde hace años se registra el envejecimiento de los caficultores sin relevo suficiente.", "Estudios del sector ubican la edad promedio de los caficultores alrededor de los 55 años.", "Sin programas de relevo, menos productores activos y menos café para la cooperativa."]};Object.entries(FIC).forEach(([i,x])=>Object.assign(s.vars[+i],{def:x[0],pas:x[1],pre:x[2],fut:x[3]}));
+ const pre=["v1","v4"];s.axes={x:"v4",y:"v1",xNeg:"Aplicación flexible",xPos:"Exigencia plena",yNeg:"Precio bajo",yPos:"Precio alto"};
+ s.esc={q1:{n:"Prima por trazabilidad",rol:"apuesta",narr:"Precios altos y Europa exige trazabilidad plena. Quien demuestra origen libre de deforestación cobra una prima. La cooperativa georreferenció todas las fincas y paga mejor a sus asociados.",ganar:"Trazabilidad completa, marca de especiales, contratos con prima"},
+  q2:{n:"Bonanza sin cambio",rol:"favorable",narr:"Precios altos y una norma europea flexible. Todos ganan sin invertir; nadie moderniza. Cuando la bonanza termina, la cooperativa está menos preparada que sus competidores.",ganar:"Ahorrar parte de la bonanza e invertir en trazabilidad"},
+  q3:{n:"Resistir en la finca",rol:"cubrimiento",narr:"Precios bajos y reglas flexibles. Los asociados mayores abandonan la actividad; gana quien controla costos y da servicios útiles al productor.",ganar:"Compras conjuntas de insumos, eficiencia, crédito al asociado"},
+  q4:{n:"Cumplir sin margen",rol:"adverso",narr:"Precios bajos y exigencia plena. Cumplir cuesta, pero no hay prima suficiente. Los compradores privados se llevan el café de los asociados que no están georreferenciados.",ganar:"Financiar la trazabilidad con aliados, fondo de estabilización"}};
+ s.estr=[{t:"Georreferenciar el 100% de las fincas de asociados",tipo:"Robusta",q:["q1","q2","q3","q4"]},{t:"Programa de jóvenes caficultores (formación, crédito)",tipo:"Robusta",q:["q1","q2","q3","q4"]},
+  {t:"Contratos de compra con prima por trazabilidad",tipo:"Contingente",q:["q1"]},{t:"Fondo de estabilización del precio con la Federación",tipo:"Contingente",q:["q3","q4"]}];
+ s.ind=[{eje:"Precio del café",t:"Precio interno de referencia (FNC)",s:"Cae por debajo del costo de producción varios meses",h:"Hacia Cumplir sin margen o Resistir en la finca",u:""},{eje:"Exigencias EUDR",t:"Controles de la UE a operadores medianos y grandes",s:"Rechazos de lotes sin georreferenciación",h:"Hacia Prima por trazabilidad o Cumplir sin margen",u:""},{eje:"Fidelidad",t:"% de asociados que venden a la cooperativa",s:"Cae dos trimestres seguidos",h:"Agrava Cumplir sin margen",u:""}];
+ return s;}
+
+function exampleAnglo(){return norm({"method": "anglo", "meta": {"estudiante": "Ejemplo del docente", "empresa": "Restaurante Sazón de la Montaña S.A.S. (ficticio)", "sector": "Restaurantes", "horizonte": "2026 – 2031 (5 años)", "pregunta": "¿Cómo debe Sazón de la Montaña organizar sus canales de venta y su estructura de costos para seguir siendo rentable de aquí a 2031?", "descripcion": "Restaurante ficticio de comida casual colombiana en Medellín, con dos sedes (El Poblado y Laureles), 45 empleados, servicio en salón y a domicilio. Hoy cerca del 30% de sus ventas llegan por apps de domicilio, que cobran comisión por pedido. Abre todos los días, incluidos domingos y festivos."}, "vars": [{"id": "r1", "code": "V1", "name": "Peso del canal de domicilios y poder de las plataformas", "kind": "Factor de cambio", "type": "Externa", "desc": "Domicilios crecen 18,1% (S1 2026); Rappi: +160% en pedidos de corrientazos", "ind": "% de ventas por domicilio; comisión promedio pagada a las apps", "imp": 5, "unc": 4, "impMan": "", "def": "Proporción de las ventas que llega por apps de domicilio y condiciones (comisiones) que imponen las plataformas.", "pas": "", "pre": "Primer semestre de 2026: los domicilios de restaurantes crecieron 18,1% en Colombia.", "fut": "Incierto: los domicilios pueden volverse el canal dominante o estabilizarse; las comisiones pueden subir."}, {"id": "r2", "code": "V2", "name": "Gasto de los hogares en comida fuera de casa", "kind": "Factor de cambio", "type": "Externa", "desc": "Ventas crecen, pero la inflación del sector supera la general", "ind": "Ventas mismas tiendas; ticket promedio; tráfico de clientes", "imp": 5, "unc": 4, "impMan": ""}, {"id": "r3", "code": "V3", "name": "Costo laboral por la reforma laboral", "kind": "Tendencia", "type": "Externa", "desc": "Recargo dominical 90% (2026) y 100% (2027); jornada de 42 horas", "ind": "Costo laboral / ventas", "imp": 4, "unc": 2, "impMan": "", "def": "Costo de la nómina, afectado por los recargos dominicales y nocturnos y por la jornada laboral.", "pas": "Hasta junio de 2025 el recargo dominical y festivo era del 75%.", "pre": "Desde el 1 de julio de 2026 el recargo es del 90% y la jornada máxima es de 42 horas semanales (Ley 2466 de 2025).", "fut": "En 2027 el recargo dominical llega al 100%."}, {"id": "r4", "code": "V4", "name": "Costo y volatilidad de los insumos", "kind": "Tendencia", "type": "Externa", "desc": "Inflación de restaurantes y hoteles 9,6% (jun. 2026)", "ind": "Costo de alimentos / ventas (food cost)", "imp": 4, "unc": 3, "impMan": ""}, {"id": "r5", "code": "V5", "name": "Regulación de plásticos y empaques", "kind": "Tendencia", "type": "Externa", "desc": "Ley 2232 de 2022, prohibiciones escalonadas", "ind": "Costo de empaque por pedido", "imp": 4, "unc": 2, "impMan": ""}, {"id": "r6", "code": "V6", "name": "Hábitos saludables e impuestos saludables", "kind": "Tendencia", "type": "Externa", "desc": "Impuesto a ultraprocesados en 20% desde 2026", "ind": "% de ventas de platos y bebidas saludables", "imp": 3, "unc": 2, "impMan": "", "def": "Preferencia de los clientes por opciones saludables, reforzada por los impuestos a ultraprocesados y bebidas azucaradas.", "pas": "El impuesto a ultraprocesados empezó en 10% (Ley 2277 de 2022).", "pre": "Desde enero de 2026 llegó a su tarifa máxima del 20%.", "fut": "Más demanda de opciones saludables; posible presión para reformular recetas y bebidas."}, {"id": "r7", "code": "V7", "name": "Competencia de cocinas ocultas y cadenas", "kind": "Hecho portador de futuro", "type": "Externa", "desc": "Apertura de cocinas solo para domicilios en la zona", "ind": "Número de marcas virtuales en el radio de entrega", "imp": 4, "unc": 3, "impMan": ""}, {"id": "r8", "code": "V8", "name": "Seguridad en la ciudad", "kind": "Factor de cambio", "type": "Externa", "desc": "Percepción de inseguridad en horario nocturno", "ind": "Ventas de salón después de las 8 p. m.", "imp": 3, "unc": 3, "impMan": ""}, {"id": "r9", "code": "V9", "name": "Turismo en Medellín", "kind": "Tendencia", "type": "Externa", "desc": "Llegada de visitantes nacionales y extranjeros", "ind": "% de clientes turistas", "imp": 3, "unc": 3, "impMan": ""}, {"id": "r10", "code": "V10", "name": "Tecnologías de autoservicio y robótica de cocina", "kind": "Hecho portador de futuro", "type": "Externa", "desc": "Pilotos de kioscos de autopedido y cocina automatizada", "ind": "Costo de adopción por punto de venta", "imp": 3, "unc": 4, "impMan": ""}], "M": [], "thr": {"imp": 4, "unc": 4, "med": 3}, "axes": {"x": "r1", "y": "r2", "xNeg": "Salón y experiencia presencial", "xPos": "Domicilios y plataformas", "yNeg": "Gasto en contracción", "yPos": "Gasto en expansión"}, "esc": {"q1": {"n": "La cocina en la app", "rol": "apuesta", "narr": "Los hogares gastan más en comida, pero la mayoría pide desde el celular. Gana quien tenga una operación de domicilio rápida, empaques que conservan la calidad y presencia en varias apps y en un canal propio. El salón se vuelve vitrina más que motor de ventas.", "ganar": "Cocina optimizada para domicilio, marca virtual, canal propio de pedidos, empaques sostenibles"}, "q2": {"n": "La mesa llena", "rol": "favorable", "narr": "La gente vuelve a salir a comer y valora la experiencia. Gana quien ofrezca ambiente, servicio y razones para visitar el local. Abrir una tercera sede tiene sentido.", "ganar": "Experiencia en salón, eventos, nueva sede, personal bien formado"}, "q3": {"n": "Menú del día", "rol": "cubrimiento", "narr": "El cliente sigue prefiriendo ir al local, pero cuida cada peso. Gana el almuerzo ejecutivo, el precio justo y la eficiencia. Las sedes poco rentables se cierran.", "ganar": "Almuerzo ejecutivo, eficiencia de turnos, compras consolidadas, revisión de sedes"}, "q4": {"n": "Guerra de comisiones", "rol": "adverso", "narr": "Los hogares gastan menos y casi todo pasa por las apps, que suben comisiones y promueven descuentos. Los márgenes se comprimen entre comisiones, costo laboral e insumos. Solo sobreviven quienes tienen costos muy bajos o clientes fieles en canal propio.", "ganar": "Canal propio, menú corto y rentable, negociación con plataformas, control estricto de costos"}}, "estr": [{"t": "Ingeniería de menú: rentabilidad por plato y menú más corto (V4)", "tipo": "Robusta", "q": ["q1", "q2", "q4", "q3"]}, {"t": "Rediseñar turnos y horarios ante recargos y jornada de 42 horas (V3)", "tipo": "Robusta", "q": ["q1", "q2", "q4", "q3"]}, {"t": "Compras consolidadas y contratos con proveedores de insumos (V4)", "tipo": "Robusta", "q": ["q1", "q2", "q4", "q3"]}, {"t": "Sustituir empaques por opciones permitidas y de buena calidad (V5)", "tipo": "Robusta", "q": ["q1", "q2", "q4", "q3"]}, {"t": "Canal propio de pedidos (WhatsApp, web) para depender menos de las apps", "tipo": "Contingente", "q": ["q1", "q4"]}, {"t": "Cocina oculta o marca virtual en lugar de tercera sede", "tipo": "Contingente", "q": ["q1", "q4"]}, {"t": "Abrir tercera sede con foco en experiencia", "tipo": "Contingente", "q": ["q2"]}, {"t": "Línea de almuerzo ejecutivo de precio accesible", "tipo": "Contingente", "q": ["q4", "q3"]}], "ind": [{"eje": "Canal de venta", "t": "% de ventas por domicilio (dato propio)", "s": "Supera el umbral por varios meses", "h": "Hacia la derecha (escenarios La cocina en la app, Guerra de comisiones)", "u": ""}, {"eje": "Canal de venta", "t": "Comisión promedio cobrada por las apps", "s": "Aumentos sucesivos", "h": "Agrava el escenarios Guerra de comisiones", "u": ""}, {"eje": "Gasto de los hogares", "t": "Ventas mismas tiendas y tráfico de clientes (dato propio)", "s": "Caída sostenida", "h": "Hacia abajo (escenarios Guerra de comisiones, Menú del día)", "u": ""}, {"eje": "Gasto de los hogares", "t": "Inflación de restaurantes vs. inflación general (DANE)", "s": "Brecha creciente", "h": "Hacia abajo (escenarios Guerra de comisiones, Menú del día)", "u": ""}, {"eje": "Competencia", "t": "Nuevas cocinas ocultas en el radio de entrega", "s": "Varias aperturas en un año", "h": "Hacia la derecha (escenarios La cocina en la app, Guerra de comisiones)", "u": ""}], "step": 0});}
+load();render();setCloud("");
+async function cloudCheck(){if(!CL.token||reviewMode)return;try{const r=await rpc("pro_recuperar",{p_token:CL.token});if(!r)return;
+ if(!CL.last||new Date(r.actualizado)>new Date(CL.last)){clearTimeout(cloudTimer);const ok=await ask(`Hay una versión más reciente de tu trabajo en la nube (guardada el ${new Date(r.actualizado).toLocaleString("es-CO")}, probablemente desde otro computador). ¿Cargarla aquí?`,"Cargar la versión de la nube","Conservar la de este equipo");
+  if(ok){S=norm(r.data);CL.last=r.actualizado;saveCL();try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}render();setCloud("Nube: versión más reciente cargada");}else{CL.last=r.actualizado;saveCL();queueCloud();}}}catch(e){setCloud("Nube: sin conexión por ahora");}}
+cloudCheck();document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")cloudCheck();});
+if(!S.vars.length)msg("Tu trabajo se guarda automáticamente en este navegador.");
+</script>
+</body>
+</html>
